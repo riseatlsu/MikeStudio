@@ -1,4 +1,4 @@
-<h1 align="center">MikeStudio</h1>
+<h1 align="center">MikeBotStudio</h1>
 
 <p align="center">
   An interactive studio that aims to make it easier to learn how to program a robot
