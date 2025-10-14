@@ -10,7 +10,6 @@
 - 🎮 **Phaser-based Simulation** — Real-time robot movement and interaction.
 - 🧱 **Blockly Integration** — Drag-and-drop block programming with instant code generation.
 - 🤖 **AI Command Assistant** — Type natural language commands and auto-generate blocks.
-- 🎨 **LSU-Themed UI** — LSU color palette with responsive and animated design.
 - 🧩 **Custom Blocks** — Move, rotate, pick up, and release actions linked to the robot API.
 
 ---
