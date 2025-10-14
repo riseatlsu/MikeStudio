@@ -1,4 +1,4 @@
-# 🧩 MikeBotStudio — LSU
+# 🧩 MikeBotStudio — LSU  🐅
 
 **MikeBotStudio** is a visual playground for learning robotics and programming concepts through interactive block-based coding (Blockly) and game simulation (Phaser).  
 
