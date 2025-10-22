@@ -12,6 +12,8 @@ app.use(bodyParser.json());
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+console.log("API Key prefix:", process.env.OPENAI_API_KEY?.slice(0, 10));
+
 app.post("/chatgpt", async (req, res) => {
   const { prompt } = req.body;
   console.log("➡️ User prompt:", prompt);
