@@ -678,6 +678,11 @@
         </div>
     </div>
 
+    <!-- Hidden XML for initial Blockly blocks -->
+    <xml xmlns="http://www.w3.org/1999/xhtml" id="blocks" style="display: none">
+        <block type="custom_start" id="start-block" deletable="false" x="20" y="20"></block>
+    </xml>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -690,8 +695,9 @@
     <script src="phaser/phaser.min.js"></script>
     
     <!-- App Scripts -->
-    <script src="js/game.js"></script>
-    <script src="js/demo.js"></script>
+    <!-- <script src="js/game.js"></script> -->
+    <!-- <script src="js/demo.js"></script> -->
+    <script type="module" src="js/isoMoveExample.js"></script>
     <script src="js/initial_setup.js"></script>
     <script src="js/bootstrap_setup.js"></script>
     <script src="js/new_blockly_setup.js"></script>

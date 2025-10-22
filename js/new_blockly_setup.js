@@ -117,6 +117,13 @@ Blockly.Extensions.register('move_block_created', function() {
   Blockly.JavaScript['rotate_right'] = function() {
     return `await GameAPI.rotateRight();\n`;
   };
+
+  // Code generator for the starting block (generates no code, just serves as entry point)
+  Blockly.JavaScript['custom_start'] = function(block) {
+    // For hat blocks (starting blocks), we typically just return empty string
+    // The workspace.getTopBlocks() or block traversal handles the execution
+    return '';
+  };
   
   // --- Toolbox ---
   const toolbox = {

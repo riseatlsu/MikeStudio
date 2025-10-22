@@ -1,21 +1,42 @@
-const managePositionsModal = new bootstrap.Modal(document.getElementById("delete-positions-modal"));
-const createPositionModal = new bootstrap.Modal(document.getElementById("create-position-modal"));
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize modals only if they exist
+  const deleteModal = document.getElementById("delete-positions-modal");
+  const createModal = document.getElementById("create-position-modal");
+  
+  const managePositionsModal = deleteModal ? new bootstrap.Modal(deleteModal) : null;
+  const createPositionModal = createModal ? new bootstrap.Modal(createModal) : null;
 
-var createPositionButton = document.getElementById("create-position-button");
-createPositionButton.addEventListener("click", requestNewPosition);
+  // Fix the button IDs to match what's actually in the HTML
+  var createPositionButton = document.getElementById("create-position-btn");
+  if (createPositionButton) {
+    createPositionButton.addEventListener("click", requestNewPosition);
+  }
 
-var showPositionsButton = document.getElementById("show-positions-button");
-showPositionsButton.addEventListener("click", toggleShowPositions);
+  var showPositionsButton = document.getElementById("show-positions-btn");
+  if (showPositionsButton) {
+    showPositionsButton.addEventListener("click", toggleShowPositions);
+  }
 
-var showDirectionsButton = document.getElementById("show-directions-button");
-showDirectionsButton.addEventListener("click", toggleShowDirections);
+  var showDirectionsButton = document.getElementById("show-directions-btn");
+  if (showDirectionsButton) {
+    showDirectionsButton.addEventListener("click", toggleShowDirections);
+  }
+
+  // Make modals available globally for the functions that need them
+  window.managePositionsModal = managePositionsModal;
+  window.createPositionModal = createPositionModal;
+});
 
 function loadCreatePositionModal() {
-    createPositionModal.show();
+    if (window.createPositionModal) {
+        window.createPositionModal.show();
+    }
 }
 
 function loadPositionsForRemoval() {
-    managePositionsModal.show();
+    if (window.managePositionsModal) {
+        window.managePositionsModal.show();
+    }
     var positionsContainer = document.getElementById("delete-positions-container")
     var htmlContent = "";
   
