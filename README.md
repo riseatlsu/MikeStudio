@@ -51,22 +51,10 @@ MikeBotStudio has **two components** that need to run simultaneously:
 
 ### A. Frontend (HTML/Blockly/Phaser)
 
-#### Option 1: Using Live Server (VSCode)
-1. Open the project folder in VSCode
-2. Right-click on `index.html`
-3. Select **"Open with Live Server"**
-4. The app will open at `http://localhost:5500` (or similar)
-
-#### Option 2: Using Python
 ```bash
-python3 -m http.server 5500
+npx vite dev
 ```
-Then open your browser to `http://localhost:5500`
-
-#### Option 3: Using Node.js http-server
-```bash
-npx http-server -p 5500
-```
+Then go to the localhost link that appears in the terminal.
 
 ### B. Backend (ChatGPT Integration Server)
 
