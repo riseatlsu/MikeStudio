@@ -20,9 +20,7 @@ Before running this project, make sure you have:
 
 - [Node.js](https://nodejs.org/en/download) (version 16 or later)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
-- A local web server such as:
-  - [Live Server (VSCode extension)](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer), **or**
-  - Python's built-in server (`python3 -m http.server 5500`)
+- A local web server
 
 ---
 
