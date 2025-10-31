@@ -29,7 +29,10 @@ class IsoMoveExample extends Scene {
   }
 
   preload() {
-    this.load.image('tile', 'assets/tile.png');
+    this.load.tilemapTiledJSON('iso-map', new URL('../assets/Construction R1.json', import.meta.url).href);
+    this.load.image('tiles-outside', new URL('../assets/iso-64x64-outside.png', import.meta.url).href);
+    this.load.image('tiles-building', new URL('../assets/iso-64x64-building.png', import.meta.url).href);
+
     this.load.scenePlugin({
       key: 'IsoPlugin',
       url: IsoPlugin,
@@ -39,31 +42,51 @@ class IsoMoveExample extends Scene {
 
   create() {
     console.log('Scene create() called');
-    this.isoGroup = this.add.group();
-    this.playerGroup = this.add.group();
 
+    // This is for isometric projection
     this.iso.projector.origin.setTo(0.5, 0.3);
 
-    // Create a simple colored rectangle for the player sprite
-    this.createPlayerTexture();
+    // Load map
+    const map = this.make.tilemap({ key: 'iso-map' });
 
-    // Create the tile grid
-    this.spawnTiles();
+    // Load tilesets — names must match your Tiled tileset names/Json exactly
+    const groundTileset = map.addTilesetImage('iso-64x64-outside', 'tiles-outside');
+    const buildingTileset = map.addTilesetImage('iso-64x64-building', 'tiles-building');
+
+    // ----- CREATE LAYERS -----
+    // Ground layer (outside)
+    const bottom1 = map.createLayer('Bottom 1', groundTileset, 0, 0);
     
-    // Create the player sprite
+    // Building layers stacked above
+    const bottom2 = map.createLayer('Bottom 2', buildingTileset, 0, 0);
+    const bottom3 = map.createLayer('Bottom 3', buildingTileset, 0, 0);
+    const top1    = map.createLayer('Top 1', buildingTileset, 0, 0);
+
+    // ----- DEPTH ORDER -----
+    bottom1.setDepth(0);  // ground
+    bottom2.setDepth(1);  // lower building
+    bottom3.setDepth(2);  // upper building
+    top1.setDepth(3);     // roof / top-most
+
+    // ----- PLAYER -----
+    this.createPlayerTexture();
     this.createPlayer();
-    
-    // Store scene reference for API
+
+    // ----- CAMERA -----
+    this.cameras.main.setBounds(-775, -250, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.setZoom(0.5);
+    // this.cameras.main.startFollow(this.player); // Basically the map follow the player, dont think we need this
+
+    // ----- STORE MAP INFO -----
+    this.gridWidth = map.width;
+    this.gridHeight = map.height;
+    this.tileSize = map.tileWidth; 
+
+    // ----- REGISTER SCENE -----
     this.registry.set('isoScene', this);
-    
-    // Signal API is ready
-    console.log('About to resolve ready promise, _readyResolve exists?', typeof _readyResolve !== 'undefined');
-    if (_readyResolve) {
-      console.log('Resolving ready promise!');
-      _readyResolve();
-    } else {
-      console.error('_readyResolve is not defined!');
-    }
+    if (_readyResolve) _readyResolve();
+
+    console.log('Map loaded successfully!');
   }
 
   createPlayerTexture() {
@@ -75,34 +98,35 @@ class IsoMoveExample extends Scene {
     graphics.destroy();
   }
 
-  spawnTiles() {
-    var tile;
+  // This is from the interaction example, not needed anymore after implementing map
+  // spawnTiles() {
+  //   var tile;
 
-    // Use the same coordinate system as the interaction example
-    for (var xx = 0; xx < 256; xx += 38) {
-      for (var yy = 0; yy < 256; yy += 38) {
-        tile = this.add.isoSprite(xx, yy, 0, 'tile', this.isoGroup);
-        tile.setInteractive();
+  //   // Use the same coordinate system as the interaction example
+  //   for (var xx = 0; xx < 256; xx += 38) {
+  //     for (var yy = 0; yy < 256; yy += 38) {
+  //       tile = this.add.isoSprite(xx, yy, 0, 'tile', this.isoGroup);
+  //       tile.setInteractive();
 
-        tile.on('pointerover', function() {
-          this.setTint(0x86bfda);
-          this.isoZ += 5;
-        });
+  //       tile.on('pointerover', function() {
+  //         this.setTint(0x86bfda);
+  //         this.isoZ += 5;
+  //       });
 
-        tile.on('pointerout', function() {
-          this.clearTint();
-          this.isoZ -= 5;
-        });
-      }
-    }
-  }
+  //       tile.on('pointerout', function() {
+  //         this.clearTint();
+  //         this.isoZ -= 5;
+  //       });
+  //     }
+  //   }
+  // }
   
   createPlayer() {
     // Convert grid position to world coordinates
     const isoX = this.playerGridX * this.tileSize;
     const isoY = this.playerGridY * this.tileSize;
     
-    this.player = this.add.isoSprite(isoX, isoY, 10, 'player', this.playerGroup);
+    this.player = this.add.isoSprite(isoX, isoY, 10, 'player');
     this.player.setScale(1.5); // Make it a bit larger
   }
   
