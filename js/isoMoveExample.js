@@ -1,10 +1,7 @@
-// Import the isometric plugin as a module (since it's installed via npm)
+import Phaser, { Game, Scene } from 'phaser';
 import IsoPlugin from 'phaser3-plugin-isometric';
 
-// Use global Phaser that's loaded via script tag
-const { Game, Scene } = window.Phaser;
-
-class IsoMoveExample extends Scene {
+class IsoMoveExample extends Phaser.Scene {
   constructor() {
     const sceneConfig = {
       key: 'IsoMoveExample',
@@ -28,6 +25,7 @@ class IsoMoveExample extends Scene {
     this.isMoving = false;
   }
 
+  // Preload assets and plugins
   preload() {
     this.load.image('tile', 'assets/tile.png');
     this.load.scenePlugin({
@@ -37,6 +35,7 @@ class IsoMoveExample extends Scene {
     });
   }
 
+  // Create game objects and set up the scene
   create() {
     console.log('Scene create() called');
     this.isoGroup = this.add.group();
@@ -109,7 +108,7 @@ class IsoMoveExample extends Scene {
   update() {
     // Update loop - no keyboard input, controlled by API only
   }
-}
+} // End of IsoMoveExample class
 
 // ------------------ ACTION QUEUE + PUBLIC API ------------------
 let game = null; // Will be set after game is created
@@ -136,7 +135,7 @@ async function _drain() {
       const v = await fn();
       resolve(v);
     } catch (e) {
-      console.error(`[GameAPI] Action failed: ${label}`, e);
+      console.error(`[IsoMoveAPI] Action failed: ${label}`, e);
       reject(e);
     }
   }
@@ -162,7 +161,7 @@ function _rotate(delta) {
     const angle = scene.playerDirection * 90;
     scene.tweens.add({
       targets: scene.player,
-      rotation: window.Phaser.Math.DegToRad(angle),
+      rotation: Phaser.Math.DegToRad(angle),
       duration: 200,
       ease: 'Power2',
       onComplete: () => resolve(true)
@@ -183,7 +182,7 @@ function _face(dirName) {
     const angle = scene.playerDirection * 90;
     scene.tweens.add({
       targets: scene.player,
-      rotation: window.Phaser.Math.DegToRad(angle),
+      rotation: Phaser.Math.DegToRad(angle),
       duration: 200,
       ease: 'Power2',
       onComplete: () => resolve(true)
@@ -296,8 +295,8 @@ function _setPosition(tx, ty) {
 }
 
 // Expose the API
-window.GameAPI = {
-  /** await GameAPI.ready() before issuing actions */
+window.IsoMoveAPI = {
+  /** await IsoMoveAPI.ready() before issuing actions */
   ready: () => _ready,
 
   /** Movement & rotation (Promise-based) */
@@ -326,15 +325,15 @@ window.GameAPI = {
 
 // Create the game after API is defined
 let config = {
-  type: window.Phaser.AUTO,
+  type: Phaser.AUTO,
   width: 800,
   height: 600,
   pixelArt: true,
-  parent: 'game-canvas',
+  parent: 'game',
   scene: IsoMoveExample,
   physics: {
     default: 'arcade'
   }
 };
 
-game = new window.Phaser.Game(config);
+game = new Phaser.Game(config);
