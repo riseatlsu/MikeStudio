@@ -15,6 +15,8 @@ export class IsometricTilemap {
     this.floorSprites = [];
     this.propSprites = [];
     this.allSprites = [];
+    this.layers = {}; // Store all layers by name
+    this.layerSprites = {}; // Store sprites organized by layer name
   }
   
   /**
@@ -47,51 +49,72 @@ export class IsometricTilemap {
    * Creates sprites for all tiles and applies depth sorting
    */
   build() {
-    const floorLayer = this.mapData.layers.find(layer => layer.name === 'Floor');
-    const propsLayer = this.mapData.layers.find(layer => layer.name === 'Props');
+    // Process all layers from the tilemap
+    const layers = this.mapData.layers;
     
-    if (!floorLayer) {
-      console.warn('No Floor layer found in tilemap');
+    if (!layers || layers.length === 0) {
+      console.warn('No layers found in tilemap');
       return;
     }
     
-    // Create all sprites first
-    for (let y = 0; y < this.mapHeight; y++) {
-      this.floorSprites[y] = [];
-      for (let x = 0; x < this.mapWidth; x++) {
-        const index = y * this.mapWidth + x;
-        const screenPos = this.gridToScreen(x, y, 0);
-        
-        // Create floor tile
-        const floorTileId = floorLayer.data[index];
-        if (floorTileId > 0) {
-          const sprite = this.scene.add.sprite(screenPos.x, screenPos.y, this.tilesetTexture);
-          sprite.setFrame(floorTileId - 1);
-          sprite.setOrigin(0.5, 0.5);
-          sprite.gridX = x;
-          sprite.gridY = y;
-          sprite.gridZ = 0;
-          this.floorSprites[y][x] = sprite;
-          this.allSprites.push(sprite);
+    // Sort layers by their depth/order for proper rendering
+    const sortedLayers = [...layers].sort((a, b) => {
+      // Layers are sorted by their index (order in Tiled)
+      return layers.indexOf(a) - layers.indexOf(b);
+    });
+    
+    // Create sprites for each layer
+    sortedLayers.forEach((layer, layerIndex) => {
+      if (layer.type !== 'tilelayer') return; // Only process tile layers
+      
+      this.layers[layer.name] = layer;
+      this.layerSprites[layer.name] = [];
+      
+      // Special handling for backwards compatibility
+      if (layer.name === 'Floor') {
+        this.floorSprites = [];
+      }
+      
+      for (let y = 0; y < this.mapHeight; y++) {
+        if (layer.name === 'Floor') {
+          this.floorSprites[y] = [];
         }
         
-        // Create prop tile if props layer exists
-        if (propsLayer) {
-          const propTileId = propsLayer.data[index];
-          if (propTileId > 0) {
-            const propPos = this.gridToScreen(x, y, 16);
-            const sprite = this.scene.add.sprite(propPos.x, propPos.y, this.tilesetTexture);
-            sprite.setFrame(propTileId - 1);
+        for (let x = 0; x < this.mapWidth; x++) {
+          const index = y * this.mapWidth + x;
+          const tileId = layer.data[index];
+          
+          if (tileId > 0) {
+            // Calculate Z offset based on layer order (higher layers get more offset)
+            const zOffset = layerIndex > 0 ? 8 : 0;
+            const screenPos = this.gridToScreen(x, y, zOffset);
+            
+            const sprite = this.scene.add.sprite(screenPos.x, screenPos.y, this.tilesetTexture);
+            sprite.setFrame(tileId - 1);
             sprite.setOrigin(0.5, 0.5);
             sprite.gridX = x;
             sprite.gridY = y;
-            sprite.gridZ = 16;
-            this.propSprites.push(sprite);
+            sprite.gridZ = layerIndex; // Layer index determines depth priority
+            sprite.layerName = layer.name;
+            sprite.tileId = tileId;
+            
+            // Store in layer-specific array
+            this.layerSprites[layer.name].push(sprite);
             this.allSprites.push(sprite);
+            
+            // Backwards compatibility - store floor tiles in grid
+            if (layer.name === 'Floor') {
+              this.floorSprites[y][x] = sprite;
+            }
+            
+            // Backwards compatibility - store props
+            if (layer.name === 'Props') {
+              this.propSprites.push(sprite);
+            }
           }
         }
       }
-    }
+    });
     
     // Sort and set depth
     this.updateDepth();
@@ -103,15 +126,20 @@ export class IsometricTilemap {
    */
   updateDepth() {
     this.allSprites.sort((a, b) => {
-      // Sort by Y first (back to front)
+      // First priority: Z layer (floors vs props)
+      // This ensures ALL floors render before ALL props
+      if (a.gridZ !== b.gridZ) return a.gridZ - b.gridZ;
+      
+      // Within same layer, sort by grid Y (back to front)
       if (a.gridY !== b.gridY) return a.gridY - b.gridY;
-      // Then by X
+      
+      // Then by grid X
       if (a.gridX !== b.gridX) return a.gridX - b.gridX;
-      // Then by Z (height)
-      return a.gridZ - b.gridZ;
+      
+      return 0;
     });
     
-    // Assign depth values based on sort order
+    // Assign depth values
     this.allSprites.forEach((sprite, index) => {
       sprite.setDepth(index);
     });
@@ -139,6 +167,74 @@ export class IsometricTilemap {
    */
   getPropsAtPosition(gridX, gridY) {
     return this.propSprites.filter(sprite => sprite.gridX === gridX && sprite.gridY === gridY);
+  }
+  
+  /**
+   * Get tile at a specific grid position and layer
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   * @param {string} layerName - Name of the layer to query
+   * @returns {Object|null} Object with tileId and sprite, or null if no tile
+   */
+  getTileAt(gridX, gridY, layerName) {
+    if (!this.layerSprites[layerName]) {
+      console.warn(`Layer "${layerName}" not found`);
+      return null;
+    }
+    
+    const sprite = this.layerSprites[layerName].find(
+      s => s.gridX === gridX && s.gridY === gridY
+    );
+    
+    if (sprite) {
+      return {
+        tileId: sprite.tileId,
+        sprite: sprite,
+        gridX: gridX,
+        gridY: gridY,
+        layerName: layerName
+      };
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Get all tiles at a specific grid position across all layers
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   * @returns {Array<Object>} Array of tile objects with tileId, sprite, and layerName
+   */
+  getAllTilesAt(gridX, gridY) {
+    const tiles = [];
+    
+    Object.keys(this.layerSprites).forEach(layerName => {
+      const tile = this.getTileAt(gridX, gridY, layerName);
+      if (tile) {
+        tiles.push(tile);
+      }
+    });
+    
+    return tiles;
+  }
+  
+  /**
+   * Get list of all layer names
+   * @returns {Array<string>} Array of layer names
+   */
+  getLayerNames() {
+    return Object.keys(this.layers);
+  }
+  
+  /**
+   * Check if a tile exists at a position on a specific layer
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   * @param {string} layerName - Name of the layer to check
+   * @returns {boolean} True if a tile exists at that position
+   */
+  hasTileAt(gridX, gridY, layerName) {
+    return this.getTileAt(gridX, gridY, layerName) !== null;
   }
   
   /**
@@ -255,6 +351,11 @@ export class IsometricPlayer {
       return false;
     }
     
+    // Check if there's a blocking prop on the Props layer
+    if (this.isoMap.hasTileAt(gridX, gridY, 'Props')) {
+      return false;
+    }
+    
     this.isMoving = true;
     
     const screenPos = this.isoMap.gridToScreen(gridX, gridY, this.zHeight);
@@ -344,6 +445,70 @@ export class IsometricPlayer {
       gridY: this.gridY,
       isMoving: this.isMoving
     };
+  }
+  
+  /**
+   * Get the grid position in front of the player based on current direction
+   * @returns {{x: number, y: number}} Grid coordinates in front of player
+   */
+  getPositionInFront() {
+    let x = this.gridX;
+    let y = this.gridY;
+    
+    switch (this.direction) {
+      case 0: y += 1; break; // South
+      case 1: x += 1; break; // East
+      case 2: x -= 1; break; // West
+      case 3: y -= 1; break; // North
+    }
+    
+    return { x, y };
+  }
+  
+  /**
+   * Get tile in front of player on a specific layer
+   * @param {string} layerName - Name of the layer to query
+   * @returns {Object|null} Tile object or null
+   */
+  getTileInFront(layerName) {
+    const pos = this.getPositionInFront();
+    return this.isoMap.getTileAt(pos.x, pos.y, layerName);
+  }
+  
+  /**
+   * Get all tiles in front of player across all layers
+   * @returns {Array<Object>} Array of tile objects
+   */
+  getAllTilesInFront() {
+    const pos = this.getPositionInFront();
+    return this.isoMap.getAllTilesAt(pos.x, pos.y);
+  }
+  
+  /**
+   * Check if there's a tile in front of player on a specific layer
+   * @param {string} layerName - Name of the layer to check
+   * @returns {boolean} True if tile exists
+   */
+  hasTileInFront(layerName) {
+    const pos = this.getPositionInFront();
+    return this.isoMap.hasTileAt(pos.x, pos.y, layerName);
+  }
+  
+  /**
+   * Get tile at player's current position on a specific layer
+   * @param {string} layerName - Name of the layer to query
+   * @returns {Object|null} Tile object or null
+   */
+  getTileAtPosition(layerName) {
+    return this.isoMap.getTileAt(this.gridX, this.gridY, layerName);
+  }
+  
+  /**
+   * Get all tiles at player's current position across all layers
+   * @returns {Array<Object>} Array of tile objects
+   */
+  getAllTilesAtPosition() {
+    return this.isoMap.getAllTilesAt(this.gridX, this.gridY);
   }
   
   /**

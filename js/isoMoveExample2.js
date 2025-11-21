@@ -56,7 +56,7 @@ class IsoMoveExample extends Scene {
     this.isoMap.build();
     
     // Center the camera on the map
-    this.isoMap.centerCamera(this.cameras.main, 0.8);
+    this.isoMap.centerCamera(this.cameras.main, 0.93);
     
     // Create the player using IsometricPlayer class
     this.isoPlayer = new IsometricPlayer(this, this.isoMap, 'robot', 2, 2, {
