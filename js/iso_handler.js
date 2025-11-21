@@ -270,11 +270,12 @@ export class IsometricPlayer {
     this.gridY = gridY;
     this.direction = config.startDirection || 0; // 0=South, 1=East, 2=West, 3=North
     this.isMoving = false;
+    this.frameOffset = config.frameOffset || 0; // Offset to select different rows in sprite sheet
     
     // Create the sprite
     const screenPos = isoMap.gridToScreen(gridX, gridY, config.zHeight || 8);
     this.sprite = scene.add.sprite(screenPos.x, screenPos.y, spriteKey);
-    this.sprite.setFrame(this.direction);
+    this.sprite.setFrame(this.direction + this.frameOffset);
     this.sprite.setScale(config.scale || 1.6);
     this.sprite.setDepth(config.depth || 10000);
     
@@ -311,7 +312,7 @@ export class IsometricPlayer {
    */
   updateFrame() {
     if (this.sprite) {
-      this.sprite.setFrame(this.direction);
+      this.sprite.setFrame(this.direction + this.frameOffset);
     }
   }
   

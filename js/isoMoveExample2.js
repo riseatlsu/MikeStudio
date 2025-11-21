@@ -65,7 +65,8 @@ class IsoMoveExample extends Scene {
       highlightTile: true,
       highlightColor: 0x0066cc,
       moveDuration: 300,
-      depth: 10000
+      depth: 10000,
+      frameOffset: 0  // Use bottom row (frames 4-7 instead of 0-3)
     });
     
     // Store scene reference for API
