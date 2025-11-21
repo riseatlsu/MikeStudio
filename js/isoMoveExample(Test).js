@@ -237,7 +237,11 @@ function _getBackwardPosition(scene) {
 }
 
 function _isValidPosition(scene, x, y) {
-  return x >= 0 && x < scene.gridWidth && y >= 0 && y < scene.gridHeight;
+  if (x >= 0 && x < scene.gridWidth && y >= 0 && y < scene.gridHeight) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 function _moveToPosition(scene, gridX, gridY) {
