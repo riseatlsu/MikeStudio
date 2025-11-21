@@ -97,29 +97,6 @@ class IsoMoveExample extends Scene {
     graphics.generateTexture('player', 16, 16);
     graphics.destroy();
   }
-
-  // This is from the interaction example, not needed anymore after implementing map
-  // spawnTiles() {
-  //   var tile;
-
-  //   // Use the same coordinate system as the interaction example
-  //   for (var xx = 0; xx < 256; xx += 38) {
-  //     for (var yy = 0; yy < 256; yy += 38) {
-  //       tile = this.add.isoSprite(xx, yy, 0, 'tile', this.isoGroup);
-  //       tile.setInteractive();
-
-  //       tile.on('pointerover', function() {
-  //         this.setTint(0x86bfda);
-  //         this.isoZ += 5;
-  //       });
-
-  //       tile.on('pointerout', function() {
-  //         this.clearTint();
-  //         this.isoZ -= 5;
-  //       });
-  //     }
-  //   }
-  // }
   
   createPlayer() {
     // Convert grid position to world coordinates

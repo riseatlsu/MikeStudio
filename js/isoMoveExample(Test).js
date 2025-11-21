@@ -20,8 +20,8 @@ class IsoMoveExample extends Scene {
     
     // Player properties
     this.player = null;
-    this.playerGridX = 5;  // Starting position on walkable area
-    this.playerGridY = 5;
+    this.playerGridX = 2;
+    this.playerGridY = 2;
     this.playerDirection = 0; // 0=North, 1=East, 2=South, 3=West
     
     // Movement
@@ -29,9 +29,9 @@ class IsoMoveExample extends Scene {
   }
 
   preload() {
-    this.load.tilemapTiledJSON('iso-map', new URL('../assets/Warehouse2.json', import.meta.url).href);
-    this.load.image('tiles-outside', new URL('../assets/T3.png', import.meta.url).href);
-    //this.load.image('tiles-building', new URL('../assets/iso-64x64-building.png', import.meta.url).href);
+    this.load.tilemapTiledJSON('iso-map', new URL('../assets/Construction R1.json', import.meta.url).href);
+    this.load.image('tiles-outside', new URL('../assets/iso-64x64-outside.png', import.meta.url).href);
+    this.load.image('tiles-building', new URL('../assets/iso-64x64-building.png', import.meta.url).href);
 
     this.load.scenePlugin({
       key: 'IsoPlugin',
@@ -50,27 +50,22 @@ class IsoMoveExample extends Scene {
     const map = this.make.tilemap({ key: 'iso-map' });
 
     // Load tilesets — names must match your Tiled tileset names/Json exactly
-    const groundTileset = map.addTilesetImage('T3', 'tiles-outside');
-    //const buildingTileset = map.addTilesetImage('iso-64x64-building', 'tiles-building');
-
-    // ----- STORE MAP INFO FIRST -----
-    this.gridWidth = map.width;
-    this.gridHeight = map.height;
-    this.tileSize = map.tileWidth;
+    const groundTileset = map.addTilesetImage('iso-64x64-outside', 'tiles-outside');
+    const buildingTileset = map.addTilesetImage('iso-64x64-building', 'tiles-building');
 
     // ----- CREATE LAYERS -----
     // Ground layer (outside)
-    this.groundLayer = map.createLayer('Bottom 1', groundTileset, 0, 0);
+    const bottom1 = map.createLayer('Bottom 1', groundTileset, 0, 0);
     
     // Building layers stacked above
-    const bottom2 = map.createLayer('Tile Layer 2', groundTileset, 0, 0);
-    //const bottom3 = map.createLayer('Bottom 3', buildingTileset, 0, 0);
-    const top1 = map.createLayer('Top 1', groundTileset, 0, 0);
+    const bottom2 = map.createLayer('Bottom 2', buildingTileset, 0, 0);
+    const bottom3 = map.createLayer('Bottom 3', buildingTileset, 0, 0);
+    const top1    = map.createLayer('Top 1', buildingTileset, 0, 0);
 
     // ----- DEPTH ORDER -----
-    this.groundLayer.setDepth(0);  // ground
+    bottom1.setDepth(0);  // ground
     bottom2.setDepth(1);  // lower building
-   // bottom3.setDepth(2);  // upper building
+    bottom3.setDepth(2);  // upper building
     top1.setDepth(3);     // roof / top-most
 
     // ----- PLAYER -----
@@ -78,16 +73,14 @@ class IsoMoveExample extends Scene {
     this.createPlayer();
 
     // ----- CAMERA -----
-    // Set zoom first to make map bigger
-    this.cameras.main.setZoom(1.2);
-    
-    // Set bounds to allow camera movement around the map
-    this.cameras.main.setBounds(0, 0, map.widthInPixels * 2, map.heightInPixels * 2);
-    
-    // Center camera on the player's position
-    const playerWorldX = this.player.x;
-    const playerWorldY = this.player.y;
-    this.cameras.main.centerOn(playerWorldX, playerWorldY);
+    this.cameras.main.setBounds(-775, -250, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.setZoom(0.5);
+    // this.cameras.main.startFollow(this.player); // Basically the map follow the player, dont think we need this
+
+    // ----- STORE MAP INFO -----
+    this.gridWidth = map.width;
+    this.gridHeight = map.height;
+    this.tileSize = map.tileWidth; 
 
     // ----- REGISTER SCENE -----
     this.registry.set('isoScene', this);
@@ -104,7 +97,7 @@ class IsoMoveExample extends Scene {
     graphics.generateTexture('player', 16, 16);
     graphics.destroy();
   }
-  
+
   createPlayer() {
     // Convert grid position to world coordinates
     const isoX = this.playerGridX * this.tileSize;
@@ -112,7 +105,6 @@ class IsoMoveExample extends Scene {
     
     this.player = this.add.isoSprite(isoX, isoY, 10, 'player');
     this.player.setScale(1.5); // Make it a bit larger
-    this.player.setDepth(100); // Render on top of all map layers
   }
   
   update() {
@@ -245,64 +237,7 @@ function _getBackwardPosition(scene) {
 }
 
 function _isValidPosition(scene, x, y) {
-  // Check if position is within map bounds
-  if (x < 0 || x >= scene.gridWidth || y < 0 || y >= scene.gridHeight) {
-    console.log(`Position (${x}, ${y}) outside map bounds`);
-    return false;
-  }
-  
-  // Tighter rectangular boundary for the visible green diamond area
-  // Based on your feedback, the playable area is much smaller
-  if (x < 0 || x > 13 || y < 0 || y > 13) {
-    console.log(`Position (${x}, ${y}) outside basic bounds`);
-    return false;
-  }
-  
-  // Cut off corners to create diamond shape
-  // These create a tighter diamond
-  
-  // Top-left corner: x + y must be >= 3
-  if (x + y < 3) {
-    console.log(`Position (${x}, ${y}) in top-left corner cutoff`);
-    return false;
-  }
-  
-  // Top-right corner: x - y must be <= 10
-  if (x - y > 10) {
-    console.log(`Position (${x}, ${y}) in top-right corner cutoff`);
-    return false;
-  }
-  
-  // Bottom-left corner: y - x must be <= 10
-  if (y - x > 12) {
-    console.log(`Position (${x}, ${y}) in bottom-left corner cutoff`);
-    return false;
-  }
-  
-  // Bottom-right corner: x + y must be <= 23
-  if (x + y > 23) {
-    console.log(`Position (${x}, ${y}) in bottom-right corner cutoff`);
-    return false;
-  }
-  
-  // Check the ground layer
-  if (!scene.groundLayer) {
-    console.log(`No ground layer`);
-    return false;
-  }
-  
-  const groundTile = scene.groundLayer.getTileAt(x, y);
-  
-  if (!groundTile) {
-    console.log(`Position (${x}, ${y}) has no ground tile`);
-    return false;
-  }
-  
-  console.log(`Position (${x}, ${y}) tile: ${groundTile.index} - WALKABLE`);
-  
-  // Both 51 and 83 are walkable
-  const walkableTiles = [51, 83];
-  return walkableTiles.includes(groundTile.index);
+  return x >= 0 && x < scene.gridWidth && y >= 0 && y < scene.gridHeight;
 }
 
 function _moveToPosition(scene, gridX, gridY) {
