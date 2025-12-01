@@ -17,6 +17,7 @@ export class IsometricTilemap {
     this.allSprites = [];
     this.layers = {}; // Store all layers by name
     this.layerSprites = {}; // Store sprites organized by layer name
+    this.items = []; // Track all spawned items
   }
   
   /**
@@ -249,13 +250,52 @@ export class IsometricTilemap {
   }
   
   /**
+   * Spawn an item at a grid position
+   * @param {string} spriteKey - The sprite key for the item
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   * @param {Object} config - Configuration options
+   * @returns {IsometricItem} The created item
+   */
+  spawnItem(spriteKey, gridX, gridY, config = {}) {
+    const item = new IsometricItem(this.scene, this, spriteKey, gridX, gridY, config);
+    this.items.push(item);
+    return item;
+  }
+  
+  /**
+   * Remove an item from the tilemap
+   * @param {IsometricItem} item - The item to remove
+   */
+  removeItem(item) {
+    const index = this.items.indexOf(item);
+    if (index > -1) {
+      this.items.splice(index, 1);
+    }
+  }
+  
+  /**
+   * Get item at a grid position
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   * @returns {IsometricItem|null} The item at that position or null
+   */
+  getItemAt(gridX, gridY) {
+    return this.items.find(item => 
+      !item.isCarried && item.gridX === gridX && item.gridY === gridY
+    ) || null;
+  }
+  
+  /**
    * Destroy all sprites created by this tilemap
    */
   destroy() {
     this.allSprites.forEach(sprite => sprite.destroy());
+    this.items.forEach(item => item.destroy());
     this.floorSprites = [];
     this.propSprites = [];
     this.allSprites = [];
+    this.items = [];
   }
 }
 
@@ -280,31 +320,64 @@ export class IsometricPlayer {
     this.sprite.setDepth(config.depth || 10000);
     
     // Highlighting
-    this.currentTileHighlight = null;
-    if (config.highlightTile) {
-      this.highlightCurrentTile(config.highlightColor || 0x0066cc);
-    }
+    this.highlightGraphic = null;
+    this.highlightColor = config.highlightColor || 0x0066cc;
+    this.shouldHighlight = config.highlightTile || false;
     
     this.zHeight = config.zHeight || 8;
     this.moveDuration = config.moveDuration || 300;
+    this.moveDelay = config.moveDelay || 0; // Delay between moves in milliseconds
+    this.carriedItem = null; // Track item being carried
+    
+    // Apply initial highlight after a small delay to ensure tilemap is ready
+    if (this.shouldHighlight) {
+      this.scene.time.delayedCall(10, () => {
+        this.highlightCurrentTile();
+      });
+    }
   }
   
   /**
    * Highlight the current tile the player is on
-   * @param {number} color - Hex color for the tint (default 0x0066cc)
+   * @param {number} color - Hex color for the highlight (uses stored color if not provided)
    */
-  highlightCurrentTile(color = 0x0066cc) {
-    // Remove previous highlight
-    if (this.currentTileHighlight) {
-      this.currentTileHighlight.clearTint();
+  highlightCurrentTile(color) {
+    if (!this.shouldHighlight) return;
+    
+    // Use provided color or the stored highlight color
+    const highlightColor = color !== undefined ? color : this.highlightColor;
+    
+    // Remove previous highlight graphic
+    if (this.highlightGraphic) {
+      this.highlightGraphic.destroy();
+      this.highlightGraphic = null;
     }
     
-    // Highlight the tile the player is on
-    const tile = this.isoMap.getFloorTile(this.gridX, this.gridY);
-    if (tile) {
-      this.currentTileHighlight = tile;
-      tile.setTint(color);
-    }
+    // Get the screen position for the highlight
+    const screenPos = this.isoMap.gridToScreen(this.gridX, this.gridY, 0);
+    
+    // Create a diamond-shaped highlight graphic for the isometric tile
+    this.highlightGraphic = this.scene.add.graphics();
+    this.highlightGraphic.fillStyle(highlightColor, 0.4); // 40% opacity
+    this.highlightGraphic.lineStyle(2, highlightColor, 0.8); // Border with 80% opacity
+    
+    // Draw isometric diamond shape
+    const halfWidth = this.isoMap.tileWidth / 2;
+    const halfHeight = this.isoMap.tileHeight / 2;
+    
+    this.highlightGraphic.beginPath();
+    this.highlightGraphic.moveTo(screenPos.x, screenPos.y - halfHeight); // Top
+    this.highlightGraphic.lineTo(screenPos.x + halfWidth, screenPos.y); // Right
+    this.highlightGraphic.lineTo(screenPos.x, screenPos.y + halfHeight); // Bottom
+    this.highlightGraphic.lineTo(screenPos.x - halfWidth, screenPos.y); // Left
+    this.highlightGraphic.closePath();
+    this.highlightGraphic.fillPath();
+    this.highlightGraphic.strokePath();
+    
+    // Set depth to be just above floor tiles but below props
+    this.highlightGraphic.setDepth(500);
+    
+    console.log(`Highlighting tile at (${this.gridX}, ${this.gridY}) with color 0x${highlightColor.toString(16)}`);
   }
   
   /**
@@ -352,14 +425,37 @@ export class IsometricPlayer {
       return false;
     }
     
-    // Check if there's a blocking prop on the Props layer
-    if (this.isoMap.hasTileAt(gridX, gridY, 'Props')) {
-      return false;
+    // Check if there's a blocking tile on upper layers (any layer except floor)
+    const layerNames = this.isoMap.getLayerNames();
+    for (let layerName of layerNames) {
+      // Skip floor layer (assume first layer is always floor)
+      if (this.isoMap.layers[layerName] === this.isoMap.mapData.layers[0]) continue;
+      
+      if (this.isoMap.hasTileAt(gridX, gridY, layerName)) {
+        return false; // Blocked by a prop/obstacle
+      }
     }
     
     this.isMoving = true;
     
     const screenPos = this.isoMap.gridToScreen(gridX, gridY, this.zHeight);
+    
+    // If carrying an item, tween it alongside the player
+    if (this.carriedItem) {
+      const itemScreenPos = this.isoMap.gridToScreen(
+        gridX, 
+        gridY, 
+        this.zHeight + this.carriedItem.carriedZOffset
+      );
+      
+      this.scene.tweens.add({
+        targets: this.carriedItem.sprite,
+        x: itemScreenPos.x,
+        y: itemScreenPos.y,
+        duration: this.moveDuration,
+        ease: 'Power2'
+      });
+    }
     
     return new Promise(resolve => {
       this.scene.tweens.add({
@@ -371,9 +467,18 @@ export class IsometricPlayer {
         onComplete: () => {
           this.gridX = gridX;
           this.gridY = gridY;
-          this.isMoving = false;
           this.highlightCurrentTile();
-          resolve(true);
+          
+          // Apply delay before allowing next move
+          if (this.moveDelay > 0) {
+            this.scene.time.delayedCall(this.moveDelay, () => {
+              this.isMoving = false;
+              resolve(true);
+            });
+          } else {
+            this.isMoving = false;
+            resolve(true);
+          }
         }
       });
     });
@@ -450,6 +555,10 @@ export class IsometricPlayer {
   
   /**
    * Get the grid position in front of the player based on current direction
+   * Direction 0 (South) = facing towards higher Y (visually down-right in isometric)
+   * Direction 1 (East) = facing towards higher X (visually down-left in isometric)
+   * Direction 2 (West) = facing towards lower X (visually up-right in isometric)
+   * Direction 3 (North) = facing towards lower Y (visually up-left in isometric)
    * @returns {{x: number, y: number}} Grid coordinates in front of player
    */
   getPositionInFront() {
@@ -457,10 +566,10 @@ export class IsometricPlayer {
     let y = this.gridY;
     
     switch (this.direction) {
-      case 0: y += 1; break; // South
-      case 1: x += 1; break; // East
-      case 2: x -= 1; break; // West
-      case 3: y -= 1; break; // North
+      case 0: y += 1; break; // South: (2,2) -> (2,3)
+      case 1: x += 1; break; // East: (2,2) -> (3,2)
+      case 2: x -= 1; break; // West: (2,2) -> (1,2)
+      case 3: y -= 1; break; // North: (2,2) -> (2,1)
     }
     
     return { x, y };
@@ -513,12 +622,163 @@ export class IsometricPlayer {
   }
   
   /**
+   * Pick up an item in front of the player
+   * @returns {boolean} True if item was picked up
+   */
+  pickupItem() {
+    if (this.carriedItem) {
+      console.log('Already carrying an item');
+      return false;
+    }
+    
+    const pos = this.getPositionInFront();
+    const directionNames = ['South (Y+1)', 'East (X+1)', 'West (X-1)', 'North (Y-1)'];
+    console.log(`Player at (${this.gridX}, ${this.gridY}), direction: ${this.direction} (${directionNames[this.direction]})`);
+    console.log(`Looking for item at (${pos.x}, ${pos.y})`);
+    
+    const item = this.isoMap.getItemAt(pos.x, pos.y);
+    
+    if (item) {
+      console.log(`Found item at (${pos.x}, ${pos.y}), picking up!`);
+      item.pickUp(this);
+      this.carriedItem = item;
+      return true;
+    }
+    
+    console.log(`No item found at (${pos.x}, ${pos.y})`);
+    console.log('All items in map:', this.isoMap.items.map(i => `(${i.gridX}, ${i.gridY}) carried:${i.isCarried}`));
+    return false;
+  }
+  
+  /**
+   * Drop the carried item in front of the player
+   * @returns {boolean} True if item was dropped
+   */
+  dropItem() {
+    if (!this.carriedItem) {
+      console.log('Not carrying any item to drop');
+      return false;
+    }
+    
+    const pos = this.getPositionInFront();
+    console.log(`Dropping item at (${pos.x}, ${pos.y})`);
+    
+    // Drop the item (allow dropping anywhere, game logic will handle win/lose)
+    this.carriedItem.drop(pos.x, pos.y);
+    this.carriedItem = null;
+    return true;
+  }
+  
+  /**
+   * Check if player is carrying an item
+   * @returns {boolean} True if carrying an item
+   */
+  isCarryingItem() {
+    return this.carriedItem !== null;
+  }
+  
+  /**
+   * Update carried item position when player moves
+   */
+  updateCarriedItemPosition() {
+    if (this.carriedItem) {
+      this.carriedItem.updatePosition();
+    }
+  }
+  
+  /**
    * Destroy the player sprite
    */
   destroy() {
-    if (this.currentTileHighlight) {
-      this.currentTileHighlight.clearTint();
+    if (this.highlightGraphic) {
+      this.highlightGraphic.destroy();
+      this.highlightGraphic = null;
     }
+    this.sprite.destroy();
+  }
+}
+
+/**
+ * IsometricItem - Class for managing items that can be placed on tiles and carried
+ */
+export class IsometricItem {
+  constructor(scene, isoMap, spriteKey, gridX, gridY, config = {}) {
+    this.scene = scene;
+    this.isoMap = isoMap;
+    this.gridX = gridX;
+    this.gridY = gridY;
+    this.isCarried = false;
+    this.carrier = null; // Reference to the player carrying this item
+    
+    // Item height offset (items sit on top of conveyor belts)
+    this.zHeight = config.zHeight || 20;
+    this.carriedZOffset = config.carriedZOffset || 12; // Additional offset when carried
+    
+    // Visual offset adjustments for better alignment
+    this.visualOffsetX = config.visualOffsetX || 0;
+    this.visualOffsetY = config.visualOffsetY || -8; // Default: push up a bit
+    
+    // Create the sprite
+    const screenPos = isoMap.gridToScreen(gridX, gridY, this.zHeight);
+    this.sprite = scene.add.sprite(
+      screenPos.x + this.visualOffsetX, 
+      screenPos.y + this.visualOffsetY, 
+      spriteKey
+    );
+    this.sprite.setFrame(config.frame || 0);
+    this.sprite.setScale(config.scale || 1.5);
+    this.sprite.setDepth(config.depth || 15000);
+  }
+  
+  /**
+   * Pick up this item
+   * @param {IsometricPlayer} player - The player picking up the item
+   */
+  pickUp(player) {
+    this.isCarried = true;
+    this.carrier = player;
+    this.updatePosition();
+    this.sprite.setDepth(20000); // Higher depth when carried
+  }
+  
+  /**
+   * Drop this item at a grid position
+   * @param {number} gridX - Grid X position
+   * @param {number} gridY - Grid Y position
+   */
+  drop(gridX, gridY) {
+    this.isCarried = false;
+    this.carrier = null;
+    this.gridX = gridX;
+    this.gridY = gridY;
+    
+    const screenPos = this.isoMap.gridToScreen(gridX, gridY, this.zHeight);
+    this.sprite.setPosition(
+      screenPos.x + this.visualOffsetX, 
+      screenPos.y + this.visualOffsetY
+    );
+    this.sprite.setDepth(15000); // Normal depth when on conveyor
+  }
+  
+  /**
+   * Update item position (called when carrier moves)
+   */
+  updatePosition() {
+    if (this.isCarried && this.carrier) {
+      // Position item above the player sprite
+      const screenPos = this.isoMap.gridToScreen(
+        this.carrier.gridX, 
+        this.carrier.gridY, 
+        this.carrier.zHeight + this.carriedZOffset
+      );
+      this.sprite.setPosition(screenPos.x, screenPos.y);
+    }
+  }
+  
+  /**
+   * Destroy the item sprite
+   */
+  destroy() {
     this.sprite.destroy();
   }
 }
