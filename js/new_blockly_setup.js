@@ -213,103 +213,71 @@ Blockly.Extensions.register('move_block_created', function() {
     }
   }
 
-// Função que chama o backend
-async function sendPromptToChatGPT(prompt) {
-    const response = await fetch("http://localhost:3000/chatgpt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
+// Global function to create blocks from ChatGPT response (called from chatbot)
+window.createBlocksFromChatGPT = function(response) {
+  console.log("⬅️ Creating blocks from response:", response);
+
+  const commands = response.commands || [];
   
-    return await response.json(); 
+  if (commands.length === 0) {
+    console.warn("No commands received from ChatGPT");
+    return;
   }
-  
-  
-  document.getElementById("ai-generate-btn").addEventListener("click", async () => {
-    const prompt = document.getElementById("ai-prompt-input").value;
-    if (!prompt) return alert("Type a command!");
-  
-    // Add loading state
-    const generateBtn = document.getElementById("ai-generate-btn");
-    const originalHTML = generateBtn.innerHTML;
-    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
-    generateBtn.disabled = true;
-  
-    console.log("➡️ Sending prompt:", prompt);
-    
-    try {
-      const response = await sendPromptToChatGPT(prompt);
-      console.log("⬅️ Response received:", response);
-  
-      const commands = response.commands || [];
-      
-      // Find the custom_start block
-      const startBlock = blocklyWorkspace.getBlocksByType("custom_start")[0];
-      if (!startBlock) {
-        console.error("Start block not found!");
-        alert("Error: Start block not found in workspace.");
-        return;
+
+  // Find the custom_start block
+  const startBlock = blocklyWorkspace.getBlocksByType("custom_start")[0];
+  if (!startBlock) {
+    console.error("Start block not found!");
+    throw new Error("Start block not found in workspace.");
+  }
+
+  // Find the last block in the chain connected to start block
+  let lastBlock = startBlock;
+  while (lastBlock.nextConnection && lastBlock.nextConnection.targetBlock()) {
+    lastBlock = lastBlock.nextConnection.targetBlock();
+  }
+
+  commands.forEach(cmd => {
+    let block = null;
+
+    if (cmd.action === "move") {
+      block = blocklyWorkspace.newBlock("move_forward");
+      block.setFieldValue(cmd.steps || 1, "STEPS");
+    }
+    else if (cmd.action === "rotate" && (cmd.direction === "counter-clockwise" || cmd.direction === "left")) {
+      block = blocklyWorkspace.newBlock("rotate_left");
+    }
+    else if (cmd.action === "rotate" && (cmd.direction === "clockwise" || cmd.direction === "right")) {
+      block = blocklyWorkspace.newBlock("rotate_right");
+    }
+    else if (cmd.action === "pick") {
+      block = blocklyWorkspace.newBlock("pick_object");
+    }
+    else if (cmd.action === "release") {
+      block = blocklyWorkspace.newBlock("release_object");
+    }
+    else if (cmd.action === "repeat") {
+      block = blocklyWorkspace.newBlock("controls_repeat");
+      block.setFieldValue(cmd.times || 2, "TIMES");
+      // Note: Nested commands in repeat blocks would need recursive handling
+    }
+
+    if (block) {
+      block.initSvg();
+      block.render();
+
+      // Connect to the last block in the chain
+      if (lastBlock.nextConnection) {
+        lastBlock.nextConnection.connect(block.previousConnection);
       }
-  
-      // Find the last block in the chain connected to start block
-      let lastBlock = startBlock;
-      while (lastBlock.nextConnection && lastBlock.nextConnection.targetBlock()) {
-        lastBlock = lastBlock.nextConnection.targetBlock();
-      }
-  
-      commands.forEach(cmd => {
-        let block = null;
-  
-        if (cmd.action === "move") {
-          block = blocklyWorkspace.newBlock("move_forward");
-          block.setFieldValue(cmd.steps || 1, "STEPS");
-        }
-        else if (cmd.action === "rotate" && (cmd.direction === "counter-clockwise" || cmd.direction === "left")) {
-          block = blocklyWorkspace.newBlock("rotate_left");
-        }
-        else if (cmd.action === "rotate" && (cmd.direction === "clockwise" || cmd.direction === "right")) {
-          block = blocklyWorkspace.newBlock("rotate_right");
-        }
-        else if (cmd.action === "pick") {
-          block = blocklyWorkspace.newBlock("pick_object");
-        }
-        else if (cmd.action === "release") {
-          block = blocklyWorkspace.newBlock("release_object");
-        }
-        else if (cmd.action === "repeat") {
-          block = blocklyWorkspace.newBlock("controls_repeat");
-          block.setFieldValue(cmd.times || 2, "TIMES");
-          // Note: Nested commands in repeat blocks would need recursive handling
-        }
-  
-        if (block) {
-          block.initSvg();
-          block.render();
-  
-          // Connect to the last block in the chain
-          if (lastBlock.nextConnection) {
-            lastBlock.nextConnection.connect(block.previousConnection);
-          }
-  
-          lastBlock = block;
-        }
-      });
-  
-      // Center on the start block to show all generated blocks
-      blocklyWorkspace.centerOnBlock(startBlock.id);
-      
-      // Clear the input
-      document.getElementById("ai-prompt-input").value = '';
-      
-      console.log(`✅ Generated ${commands.length} blocks successfully`);
-      
-    } catch (err) {
-      console.error("❌ Error processing ChatGPT response:", err);
-      alert("Error generating blocks. Check console for details.");
-    } finally {
-      // Restore button state
-      generateBtn.innerHTML = originalHTML;
-      generateBtn.disabled = false;
+
+      lastBlock = block;
     }
   });
+
+  // Center on the start block to show all generated blocks
+  blocklyWorkspace.centerOnBlock(startBlock.id);
+  
+  console.log(`✅ Generated ${commands.length} blocks successfully`);
+};
   
