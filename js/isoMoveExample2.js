@@ -20,7 +20,7 @@ class IsoMoveExample extends Scene {
     this.isoPlayer = null;
     
     // Camera zoom state
-    this.defaultZoom = 1.5;
+    this.defaultZoom = 1;
     this.followZoom = 1.5;
     this.isZoomedIn = false;
     this.isMoving = false; // Track if moves are being executed
