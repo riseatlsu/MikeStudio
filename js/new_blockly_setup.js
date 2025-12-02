@@ -51,16 +51,16 @@ Blockly.Extensions.register('move_block_created', function() {
     },
     {
       "type": "pick_object",
-      "message0": "%1 Pick up object",
-      "args0": [{ "type": "field_checkbox", "name": "Breakpoint", "checked": false }],
+      "message0": "Pick up object",
+      "args0": [],
       "previousStatement": null,
       "nextStatement": null,
       "colour": 42
     },
     {
       "type": "release_object",
-      "message0": "%1 Release object",
-      "args0": [{ "type": "field_checkbox", "name": "Breakpoint", "checked": false }],
+      "message0": "Release object",
+      "args0": [],
       "previousStatement": null,
       "nextStatement": null,
       "colour": 120
@@ -75,17 +75,31 @@ Blockly.Extensions.register('move_block_created', function() {
     },
     {
       "type": "rotate_left",
-      "message0": "Turn left",
+      "message0": "Turn counter-clockwise",
       "previousStatement": null,
       "nextStatement": null,
       "colour": 210
     },
     {
       "type": "rotate_right",
-      "message0": "Turn right",
+      "message0": "Turn clockwise",
       "previousStatement": null,
       "nextStatement": null,
       "colour": 210
+    },
+    {
+      "type": "controls_repeat",
+      "message0": "Repeat %1 times",
+      "args0": [
+        { "type": "field_number", "name": "TIMES", "value": 2, "min": 1, "max": 100 }
+      ],
+      "message1": "do %1",
+      "args1": [
+        { "type": "input_statement", "name": "DO" }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 120
     }
   ]);
   
@@ -98,11 +112,11 @@ Blockly.Extensions.register('move_block_created', function() {
   };
   
   Blockly.JavaScript['pick_object'] = function() {
-    return `await GameAPI.toggleTow();\n`;
+    return `await GameAPI.pickupItem();\n`;
   };
   
   Blockly.JavaScript['release_object'] = function() {
-    return `await GameAPI.toggleTow();\n`;
+    return `await GameAPI.dropItem();\n`;
   };
   
   Blockly.JavaScript['move_forward'] = function(block) {
@@ -118,6 +132,12 @@ Blockly.Extensions.register('move_block_created', function() {
     return `await GameAPI.rotateRight();\n`;
   };
 
+  Blockly.JavaScript['controls_repeat'] = function(block) {
+    const times = block.getFieldValue('TIMES');
+    const branch = Blockly.JavaScript.statementToCode(block, 'DO');
+    return `for (let i = 0; i < ${times}; i++) {\n${branch}}\n`;
+  };
+
   // Code generator for the starting block (generates no code, just serves as entry point)
   Blockly.JavaScript['custom_start'] = function(block) {
     // For hat blocks (starting blocks), we typically just return empty string
@@ -129,17 +149,13 @@ Blockly.Extensions.register('move_block_created', function() {
   const toolbox = {
     "kind": "flyoutToolbox",
     "contents": [
-      { "kind": "label", "text": "Actions" },
-      { "kind": "button", "text": "Start Program", "callbackKey": "run-program" },
-      { "kind": "button", "text": "Create Position", "callbackKey": "create-position" },
-      { "kind": "button", "text": "Delete Positions", "callbackKey": "delete-positions" },
       { "kind": "label", "text": "Blocks" },
       { "kind": "block", "type": "move_forward" },
       { "kind": "block", "type": "rotate_left" },
       { "kind": "block", "type": "rotate_right" },
       { "kind": "block", "type": "pick_object" },
       { "kind": "block", "type": "release_object" },
-      { "kind": "block", "type": "move_to_position" }
+      { "kind": "block", "type": "controls_repeat" }
     ]
   };
   
@@ -174,17 +190,23 @@ Blockly.Extensions.register('move_block_created', function() {
   }
   
   // --- Botões ---
-  blocklyWorkspace.registerButtonCallback("run-program", executeBlocklyCode);
   blocklyWorkspace.registerButtonCallback("create-position", loadCreatePositionModal);
   blocklyWorkspace.registerButtonCallback("delete-positions", loadPositionsForRemoval);
   
   // --- Execução do programa ---
-  async function executeBlocklyCode() {
+  window.executeBlocklyCode = async function executeBlocklyCode() {
     const code = Blockly.JavaScript.workspaceToCode(blocklyWorkspace);
     console.log("Generated code:\n", code);
   
     try {
       await GameAPI.ready();
+      
+      // Reset level to starting position before running program
+      GameAPI.resetLevel();
+      
+      // Wait a moment for reset to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       await eval(`(async () => { ${code} })()`);
     } catch (e) {
       console.error("Blockly execution failed", e);
@@ -207,13 +229,33 @@ async function sendPromptToChatGPT(prompt) {
     const prompt = document.getElementById("ai-prompt-input").value;
     if (!prompt) return alert("Type a command!");
   
-    console.log("➡️ Sending prompt:", prompt);
-    const response = await sendPromptToChatGPT(prompt);
-    console.log("⬅️ Response received:", response);
+    // Add loading state
+    const generateBtn = document.getElementById("ai-generate-btn");
+    const originalHTML = generateBtn.innerHTML;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
+    generateBtn.disabled = true;
   
+    console.log("➡️ Sending prompt:", prompt);
+    
     try {
+      const response = await sendPromptToChatGPT(prompt);
+      console.log("⬅️ Response received:", response);
+  
       const commands = response.commands || [];
-      let previousBlock = null;
+      
+      // Find the custom_start block
+      const startBlock = blocklyWorkspace.getBlocksByType("custom_start")[0];
+      if (!startBlock) {
+        console.error("Start block not found!");
+        alert("Error: Start block not found in workspace.");
+        return;
+      }
+  
+      // Find the last block in the chain connected to start block
+      let lastBlock = startBlock;
+      while (lastBlock.nextConnection && lastBlock.nextConnection.targetBlock()) {
+        lastBlock = lastBlock.nextConnection.targetBlock();
+      }
   
       commands.forEach(cmd => {
         let block = null;
@@ -222,10 +264,10 @@ async function sendPromptToChatGPT(prompt) {
           block = blocklyWorkspace.newBlock("move_forward");
           block.setFieldValue(cmd.steps || 1, "STEPS");
         }
-        else if (cmd.action === "rotate" && cmd.direction === "left") {
+        else if (cmd.action === "rotate" && (cmd.direction === "counter-clockwise" || cmd.direction === "left")) {
           block = blocklyWorkspace.newBlock("rotate_left");
         }
-        else if (cmd.action === "rotate" && cmd.direction === "right") {
+        else if (cmd.action === "rotate" && (cmd.direction === "clockwise" || cmd.direction === "right")) {
           block = blocklyWorkspace.newBlock("rotate_right");
         }
         else if (cmd.action === "pick") {
@@ -234,26 +276,40 @@ async function sendPromptToChatGPT(prompt) {
         else if (cmd.action === "release") {
           block = blocklyWorkspace.newBlock("release_object");
         }
+        else if (cmd.action === "repeat") {
+          block = blocklyWorkspace.newBlock("controls_repeat");
+          block.setFieldValue(cmd.times || 2, "TIMES");
+          // Note: Nested commands in repeat blocks would need recursive handling
+        }
   
         if (block) {
           block.initSvg();
           block.render();
   
-          if (previousBlock) {
-            // connect to previous block
-            previousBlock.nextConnection.connect(block.previousConnection);
-          } else {
-            // place first block in workspace
-            block.moveBy(50, 50);
+          // Connect to the last block in the chain
+          if (lastBlock.nextConnection) {
+            lastBlock.nextConnection.connect(block.previousConnection);
           }
   
-          previousBlock = block;
+          lastBlock = block;
         }
       });
   
-      blocklyWorkspace.scrollCenter();
+      // Center on the start block to show all generated blocks
+      blocklyWorkspace.centerOnBlock(startBlock.id);
+      
+      // Clear the input
+      document.getElementById("ai-prompt-input").value = '';
+      
+      console.log(`✅ Generated ${commands.length} blocks successfully`);
+      
     } catch (err) {
-      console.error("❌ Error processing ChatGPT response:", err, response);
+      console.error("❌ Error processing ChatGPT response:", err);
+      alert("Error generating blocks. Check console for details.");
+    } finally {
+      // Restore button state
+      generateBtn.innerHTML = originalHTML;
+      generateBtn.disabled = false;
     }
   });
   

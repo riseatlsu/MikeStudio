@@ -136,11 +136,101 @@
             font-weight: 300;
         }
 
+        /* ===== LEVEL PROGRESS INDICATOR ===== */
+        .level-progress {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .level-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .level-circle:hover:not(.locked) {
+            transform: scale(1.1);
+            border-color: var(--lsu-gold);
+        }
+        
+        .level-circle.locked {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .level-circle.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 0.7rem;
+            bottom: -2px;
+            right: -2px;
+        }
+
+        .level-circle.active {
+            background: linear-gradient(135deg, var(--lsu-gold), #f4c430);
+            border-color: var(--lsu-gold);
+            color: var(--lsu-purple);
+            transform: scale(1.2);
+            box-shadow: 0 4px 15px rgba(253, 208, 35, 0.4);
+        }
+
+        .level-circle.completed {
+            background: linear-gradient(135deg, var(--success-color), #20c997);
+            border-color: var(--success-color);
+            color: white;
+        }
+
+        /* ===== INSTRUCTIONS BANNER ===== */
+        .instructions-banner {
+            background: linear-gradient(135deg, rgba(70, 29, 124, 0.95), rgba(90, 44, 160, 0.95));
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 2px solid rgba(253, 208, 35, 0.3);
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--lsu-gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .instructions-text {
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
         /* ===== PANELS ===== */
         .workspace-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
+            gap: 2rem;
             margin-top: 2rem;
         }
 
@@ -216,7 +306,7 @@
 
         .game-canvas {
             width: 100%;
-            height: 60vh;
+            height: 40vh;
             background: var(--dark-bg);
             border: 3px solid var(--border-color);
             border-radius: 10px;
@@ -338,7 +428,7 @@
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin: 2rem 0;
+            flex-wrap: wrap;
         }
 
         .action-btn {
@@ -375,6 +465,17 @@
         .clear-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #cc5500, #a04400);
+            box-shadow: 0 4px 15px rgba(204, 85, 0, 0.3);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(204, 85, 0, 0.4);
             color: white;
         }
 
@@ -483,14 +584,391 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #f4c430;
         }
+
+        /* ===== CONSENT SCREEN ===== */
+        .consent-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-light-purple));
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .consent-overlay.hidden {
+            display: none;
+        }
+
+        .consent-container {
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .consent-header {
+            background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-light-purple));
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .consent-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--lsu-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .consent-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .consent-body {
+            padding: 2rem;
+        }
+
+        .consent-info-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--lsu-purple);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .consent-info-title {
+            font-weight: 700;
+            color: var(--lsu-purple);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .consent-info-text {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .consent-info-text:last-child {
+            margin-bottom: 0;
+        }
+
+        .consent-checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 2px solid #ffc107;
+        }
+
+        .consent-checkbox {
+            margin-top: 0.25rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .consent-checkbox-label {
+            color: #856404;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .consent-button {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-light-purple));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(70, 29, 124, 0.3);
+        }
+
+        .consent-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(70, 29, 124, 0.4);
+        }
+
+        .consent-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .consent-footer {
+            padding: 1rem 2rem;
+            background: #f8f9fa;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        /* ===== RESULT MODAL ===== */
+        .result-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .result-modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .result-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUpBounce 0.5s ease-out;
+        }
+
+        @keyframes slideUpBounce {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) scale(0.8);
+            }
+            60% {
+                transform: translateY(-10px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .result-modal-header {
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .result-modal-header.win {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .result-modal-header.lose {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: iconBounce 0.6s ease-out 0.3s;
+            display: inline-block;
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .result-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .result-message {
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .result-stat {
+            text-align: center;
+        }
+
+        .result-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--lsu-purple);
+            display: block;
+        }
+
+        .result-stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .result-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .result-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .result-btn-retry {
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .result-btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        }
+
+        .result-btn-next {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .result-btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        @media (max-width: 576px) {
+            .result-buttons {
+                flex-direction: column;
+            }
+            
+            .result-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Consent Screen -->
+    <div class="consent-overlay" id="consent-overlay">
+        <div class="consent-container">
+            <div class="consent-header">
+                <div class="consent-logo">🐅</div>
+                <h1 class="consent-title">MikeBotStudio</h1>
+            </div>
+            
+            <div class="consent-body">
+                <div class="consent-info-box">
+                    <div class="consent-info-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Research Study Information
+                    </div>
+                    <p class="consent-info-text">
+                        <strong>Study Purpose:</strong> This experiment is designed to evaluate educational programming tools 
+                        and their effectiveness in teaching computational thinking skills.
+                    </p>
+                    <p class="consent-info-text">
+                        <strong>What You'll Do:</strong> You will complete a series of programming challenges using 
+                        visual block-based coding to control a robot in an isometric environment.
+                    </p>
+                    <p class="consent-info-text">
+                        <strong>Data Collection:</strong> We will collect interaction data, completion times, and 
+                        solution approaches. All data is anonymous and identified only by a randomly generated ID.
+                    </p>
+                    <p class="consent-info-text">
+                        <strong>Time Commitment:</strong> The study typically takes 20-30 minutes to complete.
+                    </p>
+                </div>
+
+                <div class="consent-checkbox-container">
+                    <input type="checkbox" id="consent-checkbox" class="consent-checkbox">
+                    <label for="consent-checkbox" class="consent-checkbox-label">
+                        I confirm that I am 18 years of age or older, I have read and understood the information above, 
+                        and I voluntarily consent to participate in this research study.
+                    </label>
+                </div>
+
+                <button class="consent-button" id="consent-button" disabled>
+                    <i class="fas fa-play-circle me-2"></i>
+                    Get Started with Experiment
+                </button>
+            </div>
+
+            <div class="consent-footer">
+                Louisiana State University • Educational Research Study
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="lsu-header">
         <nav class="navbar navbar-expand-lg">
-            <div class="container">
+            <div class="container-fluid" style="max-width: 95%; padding: 0 2rem;">
                 <a class="navbar-brand" href="#">
                     <div class="logo-tiger">🐅</div>
                     <span>MikeBotStudio</span>
@@ -504,26 +982,29 @@
 
     <!-- Main Content -->
     <div class="main-container">
-        <div class="container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h1 class="page-title">MikeBotStudio</h1>
-                <p class="page-subtitle">
-                    <i class="fas fa-rocket me-2"></i>
-                    Build, Code, and Play - Your Creative Programming Playground
-                </p>
+        <div class="container-fluid" style="max-width: 95%; padding: 0 2rem;">
+            <!-- Level Progress Indicator -->
+            <div class="level-progress">
+                <div class="level-circle active">1</div>
+                <div class="level-circle">2</div>
+                <div class="level-circle">3</div>
+                <div class="level-circle">4</div>
+                <div class="level-circle">5</div>
+                <div class="level-circle">6</div>
+                <div class="level-circle">7</div>
+                <div class="level-circle">8</div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="action-btn run-btn" id="run-code-btn">
-                    <i class="fas fa-play"></i>
-                    Run Code
-                </button>
-                <button class="action-btn clear-btn" id="clear-workspace-btn">
-                    <i class="fas fa-eraser"></i>
-                    Clear All
-                </button>
+            <!-- Instructions Banner -->
+            <div class="instructions-banner">
+                <div class="instructions-title">
+                    <i class="fas fa-info-circle"></i>
+                    Level 1 Instructions
+                </div>
+                <div class="instructions-text">
+                    Welcome to your first challenge! Move the box from the starting conveyor belt to the goal position. 
+                    Use the blocks on the right to program the robot's movements.
+                </div>
             </div>
 
             <!-- Workspace -->
@@ -531,26 +1012,10 @@
                 <!-- Game Panel -->
                 <div class="panel game-panel">
                     <div class="panel-header">
-                        <span><i class="fas fa-gamepad icon"></i>Game Simulation</span>
+                        <span><i class="fas fa-gamepad icon"></i>Simulation Viewer</span>
                         <small>Interactive Preview</small>
                     </div>
                     <div class="panel-body">
-                        <!-- Debug Controls -->
-                        <div class="game-controls">
-                            <button class="debug-btn" id="show-positions-btn">
-                                <i class="fas fa-crosshairs me-1"></i>
-                                Show Positions
-                            </button>
-                            <button class="debug-btn" id="show-directions-btn">
-                                <i class="fas fa-compass me-1"></i>
-                                Show Directions
-                            </button>
-                            <button class="debug-btn" id="show-collisions-btn">
-                                <i class="fas fa-expand-arrows-alt me-1"></i>
-                                Show Collisions
-                            </button>
-                        </div>
-
                         <!-- Game Canvas -->
                         <div class="game-canvas" id="game-canvas">
                             <div class="canvas-placeholder">
@@ -558,6 +1023,22 @@
                                 <!-- <div>Game will load here</div>
                                 <small>Ready for your code!</small> -->
                             </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="action-buttons" style="margin-top: 1rem;">
+                            <button class="action-btn run-btn" id="run-code-btn">
+                                <i class="fas fa-play"></i>
+                                Run Code
+                            </button>
+                            <button class="action-btn reset-btn" id="reset-btn">
+                                <i class="fas fa-redo"></i>
+                                Reset
+                            </button>
+                            <button class="action-btn clear-btn" id="clear-workspace-btn">
+                                <i class="fas fa-eraser"></i>
+                                Clear All
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -584,8 +1065,8 @@
                               <small class="text-muted">Examples:</small>
                               <div class="example-tags">
                                   <span class="example-tag" onclick="setCommand('move forward 2 steps')">move forward 2 steps</span>
-                                  <span class="example-tag" onclick="setCommand('turn left and move forward 1 step')">turn left and move forward 1 step</span>
-                                  <span class="example-tag" onclick="setCommand('turn right and move forward 3 steps')">turn right and move forward 3 steps</span>
+                                  <span class="example-tag" onclick="setCommand('turn counter-clockwise and move forward 1 step')">turn counter-clockwise and move forward 1 step</span>
+                                  <span class="example-tag" onclick="setCommand('turn clockwise and move forward 3 steps')">turn clockwise and move forward 3 steps</span>
                                   <span class="example-tag" onclick="setCommand('pick up the object')">pick up the object</span>
                                   <span class="example-tag" onclick="setCommand('release the object')">release the object</span>
                               </div>
@@ -594,7 +1075,7 @@
                               <textarea 
                                   class="ai-textarea" 
                                   id="ai-prompt-input"
-                                  placeholder="Type a robot command... e.g., 'move forward 3 steps', 'turn left', 'pick up the object'"
+                                  placeholder="Type a robot command... e.g., 'move forward 3 steps', 'turn counter-clockwise', 'pick up the object'"
                                   rows="3"></textarea>
                               <button class="ai-generate-btn" id="ai-generate-btn">
                                   <i class="fas fa-cogs me-1"></i>
@@ -678,6 +1159,34 @@
         </div>
     </div>
 
+    <!-- Result Modal -->
+    <div class="result-modal-overlay" id="result-modal">
+        <div class="result-modal">
+            <div class="result-modal-header" id="result-modal-header">
+                <div class="result-icon" id="result-icon">🎉</div>
+                <h2 class="result-title" id="result-title">Level Complete!</h2>
+            </div>
+            <div class="result-modal-body">
+                <p class="result-message" id="result-message">
+                    Great job! You successfully completed the level.
+                </p>
+                <div class="result-stats" id="result-stats">
+                    <div class="result-stat">
+                        <span class="result-stat-value" id="level-number">1</span>
+                        <span class="result-stat-label">Level</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-value" id="moves-count">-</span>
+                        <span class="result-stat-label">Moves</span>
+                    </div>
+                </div>
+                <div class="result-buttons" id="result-buttons">
+                    <!-- Buttons will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden XML for initial Blockly blocks -->
     <xml xmlns="http://www.w3.org/1999/xhtml" id="blocks" style="display: none">
         <block type="custom_start" id="start-block" deletable="false" x="20" y="20"></block>
@@ -695,9 +1204,11 @@
     <script src="phaser/phaser.min.js"></script>
     
     <!-- App Scripts -->
+    <script src="js/consent.js"></script>
+    <script src="js/level_manager.js"></script>
     <!-- <script src="js/game.js"></script> -->
     <!-- <script src="js/demo.js"></script> -->
-    <script type="module" src="js/isoMoveExample.js"></script>
+    <script type="module" src="js/isoMoveExample2.js"></script>
     <script src="js/initial_setup.js"></script>
     <script src="js/bootstrap_setup.js"></script>
     <script src="js/new_blockly_setup.js"></script>
@@ -705,15 +1216,54 @@
     <script>
         // Basic JavaScript for interaction
         document.addEventListener('DOMContentLoaded', function() {
-            // Debug button toggles
-            const debugButtons = document.querySelectorAll('.debug-btn');
-            debugButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                });
+            // ===== CONSENT SCREEN HANDLING =====
+            const consentOverlay = document.getElementById('consent-overlay');
+            const consentCheckbox = document.getElementById('consent-checkbox');
+            const consentButton = document.getElementById('consent-button');
+
+            // Check if user has already consented
+            if (window.ConsentManager && window.ConsentManager.hasConsented()) {
+                // User has already consented, hide overlay
+                consentOverlay.classList.add('hidden');
+                
+                // Initialize level manager UI
+                if (window.LevelManager) {
+                    window.LevelManager.updateProgressUI();
+                }
+            } else {
+                // Show consent screen
+                consentOverlay.classList.remove('hidden');
+            }
+
+            // Enable/disable button based on checkbox
+            consentCheckbox.addEventListener('change', function() {
+                consentButton.disabled = !this.checked;
             });
 
-            // Robot command examples
+            // Handle consent button click
+            consentButton.addEventListener('click', function() {
+                if (!consentCheckbox.checked) return;
+
+                // Process consent and get participant ID
+                const participantId = window.ConsentManager.processConsent();
+                window.ConsentManager.logConsent(participantId);
+
+                // Hide consent screen with animation
+                consentOverlay.style.opacity = '0';
+                consentOverlay.style.transition = 'opacity 0.5s ease-out';
+                
+                setTimeout(() => {
+                    consentOverlay.classList.add('hidden');
+                    consentOverlay.style.opacity = '1';
+                    
+                    // Initialize level manager UI
+                    if (window.LevelManager) {
+                        window.LevelManager.updateProgressUI();
+                    }
+                }, 500);
+            });
+
+            // ===== ROBOT COMMAND EXAMPLES =====
             window.setCommand = function(command) {
                 const aiInput = document.getElementById('ai-prompt-input');
                 aiInput.value = command;
@@ -750,11 +1300,16 @@
               }
           });
 
-            // Run code button
+            // Run code button - triggers same function as Start Program in Blockly
             const runBtn = document.getElementById('run-code-btn');
             runBtn.addEventListener('click', function() {
-                console.log('Running code...');
-                // Add your run logic here
+                console.log('Running code from Run Code button...');
+                // Call the same function that Start Program button uses
+                if (typeof executeBlocklyCode === 'function') {
+                    executeBlocklyCode();
+                } else {
+                    console.error('executeBlocklyCode function not found');
+                }
             });
 
             // Clear workspace button
@@ -762,9 +1317,172 @@
             clearBtn.addEventListener('click', function() {
                 if (confirm('Are you sure you want to clear the workspace?')) {
                     console.log('Clearing workspace...');
-                    // Add your clear logic here
+                    // Get reference to Blockly workspace
+                    if (typeof Blockly !== 'undefined' && Blockly.getMainWorkspace()) {
+                        const workspace = Blockly.getMainWorkspace();
+                        // Get all blocks except the starting block
+                        const allBlocks = workspace.getAllBlocks(false);
+                        allBlocks.forEach(block => {
+                            // Don't delete the custom_start block
+                            if (block.type !== 'custom_start') {
+                                block.dispose();
+                            }
+                        });
+                        console.log('Workspace cleared (kept starting block)');
+                    } else {
+                        console.error('Blockly workspace not found');
+                    }
                 }
             });
+
+            // Reset button
+            const resetBtn = document.getElementById('reset-btn');
+            resetBtn.addEventListener('click', function() {
+                console.log('Resetting robot to initial position...');
+                // Call the same function that resets the level
+                if (typeof GameAPI !== 'undefined' && GameAPI.resetLevel) {
+                    GameAPI.resetLevel();
+                    console.log('Robot reset to starting position');
+                } else {
+                    console.error('GameAPI.resetLevel not found');
+                }
+            });
+
+            // ===== LEVEL CIRCLE CLICK HANDLERS =====
+            const levelCircles = document.querySelectorAll('.level-circle');
+            levelCircles.forEach((circle, index) => {
+                const levelNumber = index + 1;
+                circle.style.cursor = 'pointer';
+                
+                circle.addEventListener('click', function() {
+                    if (window.LevelManager) {
+                        const progress = window.LevelManager.getProgress();
+                        const currentLevel = window.LevelManager.currentLevel;
+                        
+                        // Determine if this level is accessible:
+                        // - Level 1 is always accessible
+                        // - Completed levels are always accessible
+                        // - The level immediately after the highest completed level is accessible
+                        const highestCompleted = progress.completed.length > 0 
+                            ? Math.max(...progress.completed) 
+                            : 0;
+                        const canAccess = levelNumber === 1 || 
+                                        progress.completed.includes(levelNumber) ||
+                                        levelNumber <= highestCompleted + 1;
+                        
+                        if (canAccess && levelNumber !== currentLevel) {
+                            console.log(`Switching from level ${currentLevel} to level ${levelNumber}`);
+                            // Switch to the selected level
+                            window.LevelManager.goToLevel(levelNumber);
+                            window.LevelManager.updateProgressUI();
+                            
+                            // Reload the game scene with the new level
+                            if (window.GameAPI) {
+                                window.GameAPI.loadNewLevel();
+                            }
+                        } else if (!canAccess) {
+                            // Show message that level is locked
+                            alert('Complete the previous levels first to unlock this level!');
+                        }
+                    }
+                });
+            });
+
+            // ===== RESULT MODAL FUNCTIONS =====
+            window.showResultModal = function(isWin, currentLevel, moveCount = 0) {
+                const modal = document.getElementById('result-modal');
+                const header = document.getElementById('result-modal-header');
+                const icon = document.getElementById('result-icon');
+                const title = document.getElementById('result-title');
+                const message = document.getElementById('result-message');
+                const levelNumber = document.getElementById('level-number');
+                const movesCount = document.getElementById('moves-count');
+                const buttons = document.getElementById('result-buttons');
+
+                // Update header style
+                header.className = 'result-modal-header ' + (isWin ? 'win' : 'lose');
+
+                // Update content based on win/lose
+                if (isWin) {
+                    icon.textContent = '🎉';
+                    title.textContent = 'Level Complete!';
+                    message.textContent = 'Congratulations! You successfully completed the level and delivered the box to the goal.';
+                } else {
+                    icon.textContent = '❌';
+                    title.textContent = 'Level Failed';
+                    message.textContent = 'The box was dropped in the wrong location. Try again!';
+                }
+
+                // Update stats
+                levelNumber.textContent = currentLevel;
+                movesCount.textContent = moveCount > 0 ? moveCount : '-';
+
+                // Clear and add appropriate buttons
+                buttons.innerHTML = '';
+
+                if (isWin) {
+                    // Check if there's a next level
+                    const maxLevels = window.LevelManager ? window.LevelManager.maxLevels : 8;
+                    if (currentLevel < maxLevels) {
+                        // Show Next Level button
+                        const nextBtn = document.createElement('button');
+                        nextBtn.className = 'result-btn result-btn-next';
+                        nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Next Level';
+                        nextBtn.onclick = function() {
+                            modal.classList.remove('show');
+                            if (window.LevelManager) {
+                                window.LevelManager.completeLevel(currentLevel);
+                                window.LevelManager.nextLevel();
+                                window.LevelManager.updateProgressUI();
+                            }
+                            if (window.GameAPI) {
+                                window.GameAPI.loadNewLevel();
+                            }
+                        };
+                        buttons.appendChild(nextBtn);
+                    } else {
+                        // Last level completed
+                        const completeBtn = document.createElement('button');
+                        completeBtn.className = 'result-btn result-btn-next';
+                        completeBtn.innerHTML = '<i class="fas fa-trophy"></i> All Levels Complete!';
+                        completeBtn.onclick = function() {
+                            modal.classList.remove('show');
+                            if (window.LevelManager) {
+                                window.LevelManager.completeLevel(currentLevel);
+                                window.LevelManager.updateProgressUI();
+                            }
+                        };
+                        buttons.appendChild(completeBtn);
+                    }
+                    
+                    // Also add retry button for wins
+                    const retryBtn = document.createElement('button');
+                    retryBtn.className = 'result-btn result-btn-retry';
+                    retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
+                    retryBtn.onclick = function() {
+                        modal.classList.remove('show');
+                        if (window.GameAPI) {
+                            window.GameAPI.resetLevel();
+                        }
+                    };
+                    buttons.appendChild(retryBtn);
+                } else {
+                    // Show Retry button for losses
+                    const retryBtn = document.createElement('button');
+                    retryBtn.className = 'result-btn result-btn-retry';
+                    retryBtn.innerHTML = '<i class="fas fa-redo"></i> Start Over';
+                    retryBtn.onclick = function() {
+                        modal.classList.remove('show');
+                        if (window.GameAPI) {
+                            window.GameAPI.resetLevel();
+                        }
+                    };
+                    buttons.appendChild(retryBtn);
+                }
+
+                // Show modal
+                modal.classList.add('show');
+            };
 
             console.log('MikeBotStudio initialized successfully!');
         });

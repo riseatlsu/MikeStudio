@@ -33,11 +33,18 @@ app.post("/chatgpt", async (req, res) => {
             {
             "commands": [
                 { "action": "move", "direction": "forward", "steps": 2 },
-                { "action": "rotate", "direction": "right" },
+                { "action": "rotate", "direction": "clockwise" },
+                { "action": "rotate", "direction": "counter-clockwise" },
                 { "action": "pick" },
-                { "action": "release" }
+                { "action": "release" },
+                { "action": "repeat", "times": 3, "commands": [...] }
             ]
             }
+            
+            Notes:
+            - Use "clockwise" or "counter-clockwise" for rotation (NOT "left" or "right")
+            - Use "repeat" action to create loops with nested commands
+            - "move" only goes forward (no backward movement)
             `
         },
         { role: "user", content: prompt }
