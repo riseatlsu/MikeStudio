@@ -17,7 +17,7 @@ const brokenCol = brokenOnA ? 2 : 3;
 
 export const Level2 = {
     id: "level_002",
-    title: "Level 2: Hard Code Development",
+    title: "Level 2: Hard Authoring Code",
     description: "Navigate two obstacle walls, sort a defective box, and get past a patrolling robot — write the whole program yourself.",
     instructions: `Three jobs rolled into one today. First, two obstacle walls block the direct path from pickup to dropoff, so you'll need to plan a route around both. Second, one of the two boxes waiting at the pickup zones is defective — use <span class="ui-ref">Object Ahead is broken</span> inside an <span class="ui-ref">If / Else</span> block to check before you commit, because picking up the defective box without checking ends the level immediately. Third, a patrol robot walks back and forth across the floor further along your route — use <span class="ui-ref">Sense Object Ahead</span> inside a <span class="ui-ref">While</span> loop to wait for it to clear before crossing, since driving into it is also a hard fail. Once you've got the right box, stand on its <span class="ui-ref">green pickup zone</span>, face the input conveyor, and use <span class="ui-ref">Pick Up Object</span>; once you're clear of the patrol robot, stand on the <span class="ui-ref">red dropoff zone</span>, face the output conveyor, and use <span class="ui-ref">Drop Object</span>.`,
     isExperiment: true,

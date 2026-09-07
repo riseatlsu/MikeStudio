@@ -9,7 +9,7 @@ const walls = createEdgeWalls([0, 2, 4, 6], [1, 3, 5, 7]);
 
 export const Level1 = {
     id: "level_001",
-    title: "Level 1: Easy Code Development",
+    title: "Level 1: Easy Authoring Code",
     description: "Tutorials are over — write your first full delivery program from scratch, no starter code this time.",
     instructions: `This is your first real shift on the warehouse floor, and there's no starter code to lean on. Build the whole delivery program yourself: stand on the <span class="ui-ref">green pickup zone</span>, face the input conveyor, and use the <span class="ui-ref">Pick Up Object</span> block. Then navigate to the <span class="ui-ref">red dropoff zone</span>, face the output conveyor, and use the <span class="ui-ref">Drop Object</span> block.`,
     isExperiment: true,

@@ -77,14 +77,14 @@ export const TUTORIAL_PROGRESSION = {
 /**
  * Experimental levels in their canonical order (index 0 = level_001, etc.)
  *
- * - level_001: Easy code development - write a delivery program from scratch
+ * - level_001: Easy authoring code - write a delivery program from scratch
  *   (navigate around static obstacles, conveyor to conveyor).
- * - level_002: Hard code development - same from-scratch authoring, plus
+ * - level_002: Hard authoring code - same from-scratch authoring, plus
  *   sensing a defective box before pickup and sensing/waiting past a patrol
  *   robot (both hard-fail if you act without checking).
- * - level_003: Easy code maintenance - fix a starter program with one
+ * - level_003: Easy debugging/editing code - fix a starter program with one
  *   missing block (same task shape as level_001).
- * - level_004: Hard code maintenance - starter code already handles the
+ * - level_004: Hard debugging/editing code - starter code already handles the
  *   defective-box check correctly; finish the patrol-robot crossing and
  *   delivery (same task shape as level_002).
  */

@@ -50,23 +50,23 @@ which form a 2 (Task Type) × 2 (Difficulty) design:
 
 | Level | Task Type | Difficulty | Title |
 |---|---|---|---|
-| `level_001` | Development | Easy | Easy Code Development |
-| `level_002` | Development | Hard | Hard Code Development |
-| `level_003` | Maintenance | Easy | Easy Code Maintenance |
-| `level_004` | Maintenance | Hard | Hard Code Maintenance |
+| `level_001` | Authoring | Easy | Easy Authoring Code |
+| `level_002` | Authoring | Hard | Hard Authoring Code |
+| `level_003` | Debugging/Editing | Easy | Easy Debugging/Editing Code |
+| `level_004` | Debugging/Editing | Hard | Hard Debugging/Editing Code |
 
 **Task Type definitions:**
-- **Development** — participant starts from an empty Blockly workspace (just
+- **Authoring** — participant starts from an empty Blockly workspace (just
   the `custom_start` block) and must write a complete program that picks up
   a box from an input conveyor and delivers it to an output conveyor.
-- **Maintenance** — participant is given a starter program (`starterBlocks`
+- **Debugging/Editing** — participant is given a starter program (`starterBlocks`
   in the level config) that is either buggy or incomplete, and must read,
   debug, and/or extend it rather than write it from scratch.
 
 **Difficulty definitions (same shape for both task types):**
 - **Easy** — a single static warehouse layout with obstacle walls to route
-  around; no dynamic hazards, no sensing required. In the Maintenance level,
-  the bug is a single required block missing entirely (a `pick_object`
+  around; no dynamic hazards, no sensing required. In the Debugging/Editing
+  level, the bug is a single required block missing entirely (a `pick_object`
   step) — participant must locate and add it.
 - **Hard** — obstacle-wall navigation plus two additional mechanics layered
   on top: (1) two boxes wait at the input conveyor and exactly one is
@@ -78,7 +78,7 @@ which form a 2 (Task Type) × 2 (Difficulty) design:
   patrol robot, both hard-fail the level immediately (`failConditions` /
   NPC-collision check) rather than merely blocking progress — acting
   without sensing first is punished, not just made harder. In the
-  Maintenance level, the starter program already implements the
+  Debugging/Editing level, the starter program already implements the
   defective-box check correctly (participant can read a worked example) but
   stops the moment the box is picked up — participant must add the
   patrol-robot sensing/waiting logic and the delivery itself.
@@ -126,7 +126,7 @@ here. What follows is the same data reframed as IVs/DVs for analysis.
 | Variable | Levels / range | Source |
 |---|---|---|
 | Experimental Group | control, standard_ai, (human_human) | `participants/{uid}.experimentalGroup` |
-| Task Type | development, maintenance | derived from `levelId` (see §2.2 table) |
+| Task Type | authoring, debugging/editing | derived from `levelId` (see §2.2 table) |
 | Difficulty | easy, hard | derived from `levelId` (see §2.2 table) |
 | Presentation order (Latin square row) | 0–3 | recorded at group assignment; not yet logged as its own field — currently must be re-derived from the order `level_start` events appear in for each participant |
 

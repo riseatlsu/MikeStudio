@@ -17,7 +17,7 @@ const brokenCol = brokenOnA ? 3 : 4;
 
 export const Level4 = {
     id: "level_004",
-    title: "Level 4: Hard Code Maintenance",
+    title: "Level 4: Hard Debugging/Editing Code",
     description: "The starter code already sorts the defective box correctly — finish the job by getting past the patrol robot and completing the delivery.",
     instructions: `The starter code navigates to the pickup zones and correctly figures out which box is safe to grab — read through it, it checks <span class="ui-ref">Object Ahead is broken</span> before ever picking anything up. That part's done. What's missing is everything after: the program stops the moment the box is in hand. There's a central obstacle wall to route around, and further on a patrol robot walking back and forth across the floor — use <span class="ui-ref">Sense Object Ahead</span> inside a <span class="ui-ref">While</span> loop and the <span class="ui-ref">Wait</span> block to hold until it's clear before crossing, since driving into it is a hard fail. Once you're past it, navigate to the <span class="ui-ref">red dropoff zone</span>, face the output conveyor, and use <span class="ui-ref">Drop Object</span> to finish the job.`,
     isExperiment: true,

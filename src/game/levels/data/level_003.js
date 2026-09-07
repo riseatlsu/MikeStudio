@@ -9,7 +9,7 @@ const walls = createEdgeWalls([0, 2, 4, 6], [1, 3, 5, 7]);
 
 export const Level3 = {
     id: "level_003",
-    title: "Level 3: Easy Code Maintenance",
+    title: "Level 3: Easy Debugging/Editing Code",
     description: "Find the missing block that prevents the robot from picking up the box.",
     instructions: `The starter code moves the robot to the <span class="ui-ref">green pickup zone</span> and then all the way to the <span class="ui-ref">red dropoff zone</span> — but the box never moves. Press <span class="ui-ref">Run Code</span> to watch what happens, then figure out which block is missing and drag it into the right spot in the program. Once the fix is in place, run the code again to confirm the box reaches the output conveyor.`,
     isExperiment: true,
