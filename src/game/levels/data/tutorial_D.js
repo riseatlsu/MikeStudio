@@ -7,17 +7,17 @@ import {
 
 const walls = createEdgeWalls([0, 2, 4], [1, 3, 5]);
 
-export const TutorialD = {
-    id: "tutorial_D",
-    title: "Tutorial D: Sense and Decide",
-    description: "Use the robot's sensor to detect obstacles and decide, on its own, whether to turn or move forward.",
-    instructions: `The warehouse floor manager just wired motion sensors into your robot's chassis — time to put them to use. Use the <span class="ui-ref">Sense Object Ahead</span> block to see what's directly in front of the robot, then feed that result into an <span class="ui-ref">If / Else</span> block: if a pillar is blocking the way, turn; otherwise, keep moving forward. Wrap the check in a <span class="ui-ref">Repeat</span> loop so the robot re-checks its surroundings and reacts on its own each time, instead of you counting out every step by hand. Drop a <span class="ui-ref">Print</span> block in the loop too, so you can watch exactly what the sensor reports in the <span class="ui-ref">Terminal</span> panel as the robot moves. Start by standing on the <span class="ui-ref">green pickup zone</span> and using <span class="ui-ref">Pick Up Object</span>, then turn to face the route and build your sense-and-decide loop to steer around the pillar and reach the <span class="ui-ref">red dropoff zone</span>.`,
+export const TutorialE = {
+    id: "tutorial_E",
+    title: "Tutorial E: Quality Control",
+    description: "Check each box before you load it — only good boxes should reach the output conveyor.",
+    instructions: `Quality control just flagged a problem: one of the boxes on the input line is defective, and it must never reach a customer. Stand on each <span class="ui-ref">green pickup zone</span> and use <span class="ui-ref">Object Ahead is broken</span> inside an <span class="ui-ref">If / Else</span> block to check the box in front of you before deciding what to do. If the box is broken, leave it where it is. If it's good, use <span class="ui-ref">Pick Up Object</span> and carry it to the <span class="ui-ref">red dropoff zone</span>, then use <span class="ui-ref">Drop Object</span> to deliver it. Try dropping a <span class="ui-ref">Print</span> block in each branch so you can watch your decisions play out in the <span class="ui-ref">Terminal</span> panel.`,
     isExperiment: false,
     chatbotEnabled: false,
 
     dialogue: [
-        "Maintenance came through last night and wired motion sensors into the whole fleet. Fancy upgrade — figured you'd want to be the first to try it.",
-        "Instead of memorizing every obstacle by eye, have the robot check what's in front of it and decide for itself. Wrap it in a loop and it'll keep reacting on its own."
+        "Got a call from quality control this morning — a batch came in with at least one defective unit mixed in, and it can not go out the door.",
+        "I need you to have the robot check each box before it loads it. Anything flagged broken stays put. Everything else ships."
     ],
 
     map: {
@@ -28,22 +28,21 @@ export const TutorialD = {
 
     objects: {
         stationary: [
-            ...createHorizontalConveyor(0, 1, "tutorial_d_input"),
-            { type: "pickup_zone", row: 1, col: 2, id: "tutorial_d_input_zone", attributes: { allowDrop: true, frame: 1 } },
+            ...createHorizontalConveyor(0, 1, "tutorial_e_input"),
+            { type: "pickup_zone", row: 1, col: 1, id: "tutorial_e_pickup_good_zone", attributes: { allowDrop: true, frame: 2 } },
+            { type: "pickup_zone", row: 1, col: 3, id: "tutorial_e_pickup_broken_zone", attributes: { allowDrop: true, frame: 2 } },
 
-            ...createHorizontalConveyor(4, 2, "tutorial_d_output"),
-            { type: "dropoff_zone", row: 3, col: 3, id: "tutorial_d_output_zone", attributes: { allowDrop: true, frame: 0 } },
+            ...createHorizontalConveyor(4, 2, "tutorial_e_output"),
+            { type: "dropoff_zone", row: 3, col: 3, id: "tutorial_e_dropoff_zone", attributes: { allowDrop: true, frame: 0 } },
 
             ...walls,
 
-            // The one obstacle the sense-and-decide loop needs to react to
-            { type: "pillars", row: 1, col: 4, id: "tutorial_d_pillar", attributes: { allowDrop: false, frame: 0 } },
-
             // Decorative clutter
-            { type: "OilDrums", row: 5, col: 0, id: "tutorial_d_drum", attributes: { allowDrop: false, frame: 1 } }
+            { type: "OilDrums", row: 5, col: 0, id: "tutorial_e_drum", attributes: { allowDrop: false, frame: 1 } }
         ],
         moveable: [
-            { type: "box", id: "tutorial_d_box", row: 0, col: 2, attributes: {} }
+            { type: "box", id: "tutorial_e_box_good", row: 0, col: 1, attributes: {} },
+            { type: "box", id: "tutorial_e_box_broken", row: 0, col: 3, attributes: { broken: true } }
         ]
     },
 
@@ -55,17 +54,18 @@ export const TutorialD = {
     },
 
     winConditions: [
-        { type: "itemAtPos", itemId: "tutorial_d_box", row: 4, col: 3 }
+        { type: "itemAtPos", itemId: "tutorial_e_box_good", row: 4, col: 3 },
+        { type: "itemNotAtPos", itemId: "tutorial_e_box_broken", row: 4, col: 3 }
     ],
 
-    maxSteps: 15,
+    maxSteps: 20,
 
     allowedBlocks: {
         actions: ['move_forward', 'turn_clockwise', 'turn_counter_clockwise', 'pick_object', 'drop_object'],
-        sensing: ['survey_front'],
-        logic: ['controls_if', 'logic_compare'],
+        sensing: ['survey_front', 'check_attribute'],
+        logic: ['controls_if'],
         math: false,
-        text: ['text', 'print_message'],
-        loops: ['controls_repeat_ext']
+        text: ['print_message'],
+        loops: false
     }
 };

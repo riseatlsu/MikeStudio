@@ -7,17 +7,17 @@ import {
 
 const walls = createEdgeWalls([0, 2, 4], [1, 3, 5]);
 
-export const TutorialC = {
-    id: "tutorial_C",
-    title: "Tutorial C: Working with Your AI Assistant",
-    description: "Meet Otto, your AI assistant, and practice asking for help while completing a familiar delivery.",
-    instructions: `You've got a new coworker on this shift: an AI assistant named Otto who can answer questions while you work. Try asking things like "How do I pick up a box?" or "What does the Repeat block do?" in the chat panel. While you chat, complete the same kind of delivery you've already practiced: stand on the <span class="ui-ref">green pickup zone</span>, face the input conveyor, and use the <span class="ui-ref">Pick Up Object</span> block. Then navigate to the <span class="ui-ref">red dropoff zone</span>, face the output conveyor, and use the <span class="ui-ref">Drop Object</span> block.`,
+export const TutorialD = {
+    id: "tutorial_D",
+    title: "Tutorial D: Sense and Decide",
+    description: "Use the robot's sensor to detect obstacles and decide, on its own, whether to turn or move forward.",
+    instructions: `The warehouse floor manager just wired motion sensors into your robot's chassis — time to put them to use. Use the <span class="ui-ref">Sense Object Ahead</span> block to see what's directly in front of the robot, then feed that result into an <span class="ui-ref">If / Else</span> block: if a pillar is blocking the way, turn; otherwise, keep moving forward. Wrap the check in a <span class="ui-ref">Repeat</span> loop so the robot re-checks its surroundings and reacts on its own each time, instead of you counting out every step by hand. Drop a <span class="ui-ref">Print</span> block in the loop too, so you can watch exactly what the sensor reports in the <span class="ui-ref">Terminal</span> panel as the robot moves. Start by standing on the <span class="ui-ref">green pickup zone</span> and using <span class="ui-ref">Pick Up Object</span>, then turn to face the route and build your sense-and-decide loop to steer around the pillar and reach the <span class="ui-ref">red dropoff zone</span>.`,
     isExperiment: false,
-    chatbotEnabled: true,
+    chatbotEnabled: false,
 
     dialogue: [
-        "Oh, before I forget — HQ set you up with some extra help. Company's rolling out an AI assistant program floor-wide.",
-        "Meet Otto. It can't write your whole program for you, but it's good for a second opinion when you're stuck. Try asking it something."
+        "Maintenance came through last night and wired motion sensors into the whole fleet. Fancy upgrade — figured you'd want to be the first to try it.",
+        "Instead of memorizing every obstacle by eye, have the robot check what's in front of it and decide for itself. Wrap it in a loop and it'll keep reacting on its own."
     ],
 
     map: {
@@ -28,41 +28,44 @@ export const TutorialC = {
 
     objects: {
         stationary: [
-            ...createHorizontalConveyor(0, 1, "tutorial_c_input"),
-            { type: "pickup_zone", row: 1, col: 2, id: "tutorial_c_input_zone", attributes: { allowDrop: true, frame: 0 } },
+            ...createHorizontalConveyor(0, 1, "tutorial_d_input"),
+            { type: "pickup_zone", row: 1, col: 2, id: "tutorial_d_input_zone", attributes: { allowDrop: true, frame: 1 } },
 
-            ...createHorizontalConveyor(5, 2, "tutorial_c_output"),
-            { type: "dropoff_zone", row: 4, col: 3, id: "tutorial_c_output_zone", attributes: { allowDrop: true, frame: 1 } },
+            ...createHorizontalConveyor(4, 2, "tutorial_d_output"),
+            { type: "dropoff_zone", row: 3, col: 3, id: "tutorial_d_output_zone", attributes: { allowDrop: true, frame: 0 } },
 
             ...walls,
 
-            { type: "pillars", row: 2, col: 5, id: "tutorial_c_pillar", attributes: { allowDrop: false, frame: 2 } },
-            { type: "shelves", row: 5, col: 0, id: "tutorial_c_shelf", attributes: { allowDrop: false, frame: 6 } }
+            // The one obstacle the sense-and-decide loop needs to react to
+            { type: "pillars", row: 1, col: 4, id: "tutorial_d_pillar", attributes: { allowDrop: false, frame: 0 } },
+
+            // Decorative clutter
+            { type: "OilDrums", row: 5, col: 0, id: "tutorial_d_drum", attributes: { allowDrop: false, frame: 1 } }
         ],
         moveable: [
-            { type: "box", id: "tutorial_c_box", row: 0, col: 2, attributes: {} }
+            { type: "box", id: "tutorial_d_box", row: 0, col: 2, attributes: {} }
         ]
     },
 
     player: {
-        startRow: 3,
+        startRow: 1,
         startCol: 2,
         startDir: NORTH,
         scale: 1.5
     },
 
     winConditions: [
-        { type: "itemAtPos", itemId: "tutorial_c_box", row: 5, col: 3 }
+        { type: "itemAtPos", itemId: "tutorial_d_box", row: 4, col: 3 }
     ],
 
-    maxSteps: 14,
+    maxSteps: 15,
 
     allowedBlocks: {
-        actions: true,
-        sensing: false,
-        logic: false,
+        actions: ['move_forward', 'turn_clockwise', 'turn_counter_clockwise', 'pick_object', 'drop_object'],
+        sensing: ['survey_front'],
+        logic: ['controls_if', 'logic_compare'],
         math: false,
-        text: false,
-        loops: true
+        text: ['text', 'print_message'],
+        loops: ['controls_repeat_ext']
     }
 };
