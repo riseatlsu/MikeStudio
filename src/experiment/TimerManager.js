@@ -14,7 +14,7 @@
  */
 
 // Change this single value to adjust the session time limit for all participants.
-export const TIME_LIMIT_MINUTES = 60;
+export const TIME_LIMIT_MINUTES = 70;
 
 const STORAGE_KEYS = {
     expiresAt: 'pair_studio_timer_expires_at',
