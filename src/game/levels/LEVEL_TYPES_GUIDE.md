@@ -33,6 +33,7 @@ The pAIrStudio platform supports two types of levels:
   - `path` - Ordered array of adjacent grid tiles (`{ row, col }`) to patrol; the robot spawns at `path[0]` and walks the list back and forth (ping-pong), pausing to retry if its next tile is currently occupied
   - `ticksPerStep` (default `2`) - Game-loop ticks between each step; higher = slower patrol
   - `tint` (default `0xffa500`, amber) - Sprite tint so the NPC reads as visually distinct from the player
+  - `randomizeStart` (default `false`) - Spawn the NPC at a random point along `path` instead of always `path[0]`. Use this whenever the level's win condition depends on the player sensing/waiting for the NPC rather than moving through a fixed route - without it, the patrol is fully deterministic and a participant can hardcode a fixed turn-count "wait" that happens to dodge it every time, without ever using sensing.
 - **Example**:
   ```javascript
   npcRobots: [
@@ -48,7 +49,7 @@ The pAIrStudio platform supports two types of levels:
   - Each array entry is one click-through page of dialogue, spoken by the single hardcoded character ("Mack", portrait at `public/assets/construction-worker.jpg`, set independently by each HTML page's own `<img>` tag since root vs sandbox pages need different relative paths - only the speaker name is hardcoded in `DialogueUI.js`).
   - Shown once per participant per level, persisted via a participant-scoped localStorage key (`dialogueSeen_${participantId}_${levelId}`, mirroring `BlocklyManager`'s workspace-storage key convention). Reloading, resetting, or re-running the level (`Run Code`) will **not** replay it - only navigating to the level fresh will, and only if it hasn't been seen yet.
   - In sandbox mode, always shows fresh (never persisted) so researchers can preview any level's dialogue on demand.
-- **Writing dialogue for graded levels**: the six experimental levels (`level_001`-`level_006`) are shown to each participant in a **counterbalanced order** (see `GroupConfig.js`'s `LATIN_SQUARE`), not always 1→2→3→4→5→6. Don't write dialogue that references relative sequence ("last time," "your final job") for these levels - each one's dialogue must stand alone. Tutorials, by contrast, always run in the same fixed order per group, so sequential callbacks are safe there.
+- **Writing dialogue for graded levels**: the four experimental levels (`level_001`-`level_004`) are shown to each participant in a **counterbalanced order** (see `GroupConfig.js`'s `LATIN_SQUARE`), not always 1→2→3→4. Don't write dialogue that references relative sequence ("last time," "your final job") for these levels - each one's dialogue must stand alone. Tutorials, by contrast, always run in the same fixed order per group, so sequential callbacks are safe there.
 - **Example**:
   ```javascript
   dialogue: [
@@ -222,8 +223,8 @@ Note: Pair programming modes (PAIR_DRIVER/PAIR_NAVIGATOR) have been removed from
 
 ### 1. Onboarding Flow
 ```
-tutorial_A → tutorial_B → tutorial_C → level_001 → level_002 → ...
-(no chatbot, no data)    (experiment starts, chatbot per group)
+tutorial_A → tutorial_B → tutorial_C → tutorial_D → tutorial_E → level_001 → ...
+(no chatbot, no data)    (chatbot per group, from B on)
 ```
 
 ### 2. Baseline Measurement

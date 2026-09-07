@@ -244,22 +244,26 @@ Groups now receive different tutorial sequences based on their assigned experime
 **TUTORIAL_PROGRESSION** in `GroupConfig.js`:
 ```javascript
 export const TUTORIAL_PROGRESSION = {
-    [GROUPS.CONTROL]: ['tutorial_A', 'tutorial_B'],
-    [GROUPS.STANDARD_AI]: ['tutorial_A', 'tutorial_B', 'tutorial_C']
+    [GROUPS.CONTROL]: ['tutorial_A', 'tutorial_B', 'tutorial_C', 'tutorial_D', 'tutorial_E'],
+    [GROUPS.STANDARD_AI]: ['tutorial_A', 'tutorial_B', 'tutorial_C', 'tutorial_D', 'tutorial_E']
 };
 ```
+
+Both groups run the same 5 tutorials. `chatbotEnabled` (per level, gated by group) controls whether the chatbot appears - it's not a separate tutorial - so tutorial count and practice time stay identical across groups.
 
 ### Tutorial Levels
 
 - **tutorial_A**: Basic movement and object manipulation (all groups)
-- **tutorial_B**: Loops, repeat blocks, logic (all groups)
-- **tutorial_C**: Chatbot interaction practice (only groups with AI support)
+- **tutorial_B**: Loops/repeat blocks; chatbot-enabled groups also meet Otto and get their one guided chatbot practice rep here (all groups)
+- **tutorial_C**: Sensing + conditional logic + the Print block (all groups)
+- **tutorial_D**: Attribute-based sorting ("Object Ahead is broken") + If/Else (all groups)
+- **tutorial_E**: NPC robot avoidance via sensing + While loop + the Wait block (all groups)
 
 ### Level Progression Flow
 
 1. **Consent Accepted** → Group assigned → Progression configured
-2. **Tutorials** → Group-specific sequence (2-3 levels)
-3. **Experimental Levels** → Same for all groups
+2. **Tutorials** → Same 5-level sequence for all groups (chatbot access varies from `tutorial_B` on)
+3. **Experimental Levels** → Same 4 levels for all groups, in a counterbalanced order
 4. **Survey** → Post-study questionnaire
 
 ### Adding Tutorials

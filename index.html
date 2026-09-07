@@ -101,6 +101,10 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-3">
+                    <div class="session-timer" id="session-timer" title="Time remaining in this session" style="display: none;">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span id="session-timer-text">60:00</span>
+                    </div>
                     <button class="quit-study-btn" id="quit-study-btn" title="Quit the study">
                         <i class="fas fa-door-open"></i>
                         <span>Quit Study</span>
@@ -130,6 +134,9 @@
                 <div class="instructions-title">
                     <i class="fas fa-info-circle"></i>
                     <span id="instructions-title-text">Level Instructions</span>
+                    <button class="help-gif-btn" id="help-gif-btn" title="Show me an example" style="display: none;">
+                        <i class="fas fa-circle-question"></i> Help
+                    </button>
                 </div>
                 <div class="instructions-text"><span class="instructions-label">Instructions:</span> <span id="instructions-text">Loading instructions...</span>
                 </div>
@@ -259,6 +266,24 @@
         </div>
     </div>
 
+    <!-- Time's Up Modal (shown once the session time limit is reached) -->
+    <div class="time-up-modal-overlay" id="time-up-modal-overlay">
+        <div class="time-up-modal">
+            <div class="time-up-modal-header">
+                <div class="time-up-modal-icon"><i class="fas fa-hourglass-end"></i></div>
+                <h2 class="time-up-modal-title">Time's Up!</h2>
+            </div>
+            <div class="time-up-modal-body">
+                <p class="time-up-modal-message">
+                    You've reached the time limit for this session. That's no problem at all — you've done everything we need. All that's left is to complete a short survey about your experience.
+                </p>
+                <button class="time-up-modal-btn" id="time-up-ok-btn">
+                    <i class="fas fa-arrow-right"></i> Continue to Survey
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Quit Complete Overlay (shown after a participant confirms quitting) -->
     <div class="quit-complete-overlay" id="quit-complete-overlay">
         <div class="quit-complete-box">
@@ -266,6 +291,21 @@
             <h1>You Have Exited the Study</h1>
             <p>Your session has ended and has been recorded as incomplete. As noted before quitting, you will not receive payment for this session since the study was not completed.</p>
             <p>Thank you for your time. You may now close this browser tab.</p>
+        </div>
+    </div>
+
+    <!-- Help GIF Modal (shows an example clip for the current level) -->
+    <div class="help-gif-modal-overlay" id="help-gif-modal-overlay">
+        <div class="help-gif-modal">
+            <div class="help-gif-modal-header">
+                <h2 class="help-gif-modal-title"><i class="fas fa-circle-question"></i> Example</h2>
+                <button class="help-gif-close-btn" id="help-gif-close-btn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="help-gif-modal-body">
+                <img class="help-gif-image" id="help-gif-image" src="" alt="Example walkthrough">
+            </div>
         </div>
     </div>
 
@@ -457,7 +497,12 @@
                     
                     // Save consent
                     experimentManager.setCookie('pair_consented', 'true', 365);
-                    
+
+                    // Start the session timer now that the participant has consented
+                    if (window.timerManager) {
+                        window.timerManager.start();
+                    }
+
                     console.log('✅ Consent accepted');
                     console.log(`👤 Participant ID: ${experimentManager.participantId}`);
                     console.log(`📊 Assigned to group: ${assignedGroup}`);
@@ -466,6 +511,12 @@
                     if (window.LevelManager) {
                         window.LevelManager.setLevelProgression(assignedGroup, experimentManager.getLatinSquareRow());
                         console.log(`📚 Level progression configured for ${assignedGroup} (Latin square row ${experimentManager.getLatinSquareRow()})`);
+
+                        // MainScene.create() ran before consent was granted and
+                        // deliberately skipped loading any level (so tutorial_A's
+                        // dialogue box couldn't show pre-consent) - load the first
+                        // level now that consent + progression both exist.
+                        window.LevelManager.loadLevelById(window.LevelManager.getCurrentLevel());
                     }
                     
                     // Initialize chatbot system if needed for this group

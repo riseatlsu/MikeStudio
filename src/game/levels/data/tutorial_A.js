@@ -11,9 +11,10 @@ export const TutorialA = {
     id: "tutorial_A",
     title: "Tutorial A: Pick Up and Drop",
     description: "Your robot's first shift: pick up a box from the green pickup zone and carry it to the red dropoff zone.",
-    instructions: `Welcome to your first shift on the warehouse floor. Your robot just came online, and its first job is simple: fetch the box waiting on the input conveyor and carry it to the loading dock. To pick up the box, stand on the <span class="ui-ref">green pickup zone</span>, face the conveyor belt, and use the <span class="ui-ref">Pick Up Object</span> block. To drop off the box, stand on the <span class="ui-ref">red dropoff zone</span>, face the output conveyor belt, and use the <span class="ui-ref">Drop Object</span> block. To program the robot, click the <span class="ui-ref">Actions</span> tab in the visual programming window and drag blocks onto the canvas. Connect them top to bottom starting from the <span class="ui-ref">When Program Starts</span> block in the order you want the commands to run, then press <span class="ui-ref">Run Code</span> to see your program execute.`,
+    instructions: `Welcome to your first shift on the warehouse floor. Your robot just came online, and its first job is simple: fetch the box waiting on the input conveyor and carry it to the loading dock. To pick up the box, stand on the <span class="ui-ref">green pickup zone</span>, face the conveyor belt, and use the <span class="ui-ref">Pick Up Object</span> block. To drop off the box, stand on the <span class="ui-ref">red dropoff zone</span>, face the output conveyor belt, and use the <span class="ui-ref">Drop Object</span> block. To program the robot, click the <span class="ui-ref">Movements</span> tab in the visual programming window and drag blocks onto the canvas. Connect them top to bottom starting from the <span class="ui-ref">When Program Starts</span> block in the order you want the commands to run, then press <span class="ui-ref">Run Code</span> to see your program execute.`,
     isExperiment: false,
     chatbotEnabled: false,
+    helpGif: "assets/tutA.gif",
 
     dialogue: [
         "Hey — you must be the new automation tech. Name's Mack, I run this floor. Glad HQ finally sent someone who isn't afraid of a little code.",

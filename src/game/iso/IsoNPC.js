@@ -28,6 +28,10 @@ export class IsoNPC extends MoveableObject {
      * @param {string} config.id
      * @param {Array<{row:number,col:number}>} config.path - Ordered, adjacent grid tiles to patrol
      * @param {number} [config.ticksPerStep=2] - Game-loop ticks between each step (patrol speed)
+     * @param {number} [config.startIndex=0] - Index into path the NPC spawns/resumes at (gridRow/gridCol
+     *   passed in should match path[startIndex]). Lets the caller randomize where in the patrol the NPC
+     *   begins (see MainScene's randomizeStart handling) so a fixed hardcoded wait can't reliably predict
+     *   when the corridor is clear.
      */
     constructor(scene, board, gridRow, gridCol, texture, config = {}) {
         super(scene, board, gridRow, gridCol, texture, {
@@ -49,16 +53,17 @@ export class IsoNPC extends MoveableObject {
         this.path = Array.isArray(config.path) && config.path.length > 0
             ? config.path
             : [{ row: gridRow, col: gridCol }];
-        this.pathIndex = 0;     // caller spawns the NPC at path[0]
-        this.pathDirection = 1; // +1 forward, -1 backward (ping-pong)
+        // caller spawns the NPC at path[startIndex] (default path[0])
+        this.pathIndex = config.startIndex ?? 0;
+        this.pathDirection = 1; // +1 forward, -1 backward (ping-pong); self-corrects at either end
 
-        // Face the first step's direction (falling back to SOUTH if the
+        // Face the next step's direction (falling back to SOUTH if the
         // patrol path is a single tile) so the NPC shows its row-1 look from
         // the moment it spawns, not just after its first step.
         let initialDirFrame = 0;
         if (this.path.length > 1) {
-            const first = this.path[0];
-            const second = this.path[1];
+            const first = this.path[this.pathIndex];
+            const second = this.path[this.pathIndex + 1] ?? this.path[this.pathIndex - 1];
             initialDirFrame = this._directionFrame(second.row - first.row, second.col - first.col);
         }
         this.sprite.setFrame(initialDirFrame + NPC_FRAME_ROW_OFFSET);

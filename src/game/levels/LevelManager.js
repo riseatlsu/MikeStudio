@@ -103,17 +103,59 @@ export class LevelManager {
         
         const titleElement = document.getElementById('instructions-title-text');
         const textElement = document.getElementById('instructions-text');
-        
+
         if (titleElement && textElement) {
             const levelName = config.title || `Level ${levelId}`;
             titleElement.textContent = levelName;
-            
+
             let instructions = config.instructions || config.description || 'Complete the level objectives.';
-            
+
             // Instructions are now uniform for all groups
             // Role-specific instructions removed since pair programming mode is archived
-            
+
             textElement.innerHTML = instructions;
+        }
+
+        this.updateHelpGifUI(config);
+    }
+
+    /**
+     * Show/hide the "Help" button in the instructions banner based on whether
+     * the current level defines a helpGif, and wire up the modal that displays it.
+     */
+    updateHelpGifUI(config) {
+        const helpBtn = document.getElementById('help-gif-btn');
+        if (!helpBtn) return;
+
+        if (config.helpGif) {
+            helpBtn.style.display = '';
+            helpBtn.dataset.gif = config.helpGif;
+        } else {
+            helpBtn.style.display = 'none';
+            delete helpBtn.dataset.gif;
+        }
+
+        if (!this._helpGifModalInitialized) {
+            this._helpGifModalInitialized = true;
+
+            const modal = document.getElementById('help-gif-modal-overlay');
+            const closeBtn = document.getElementById('help-gif-close-btn');
+            const image = document.getElementById('help-gif-image');
+
+            helpBtn.addEventListener('click', () => {
+                if (!modal || !image || !helpBtn.dataset.gif) return;
+                image.src = helpBtn.dataset.gif;
+                modal.classList.add('show');
+            });
+
+            if (closeBtn && modal) {
+                closeBtn.addEventListener('click', () => modal.classList.remove('show'));
+            }
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('show');
+                });
+            }
         }
     }
 
@@ -238,7 +280,13 @@ export class LevelManager {
         // Check if this is a survey level
         if (config.type === 'survey') {
             console.log('Loading survey level');
-            
+
+            // Session timer's job is done once the survey is reached, whether
+            // that happened naturally or via the "time's up" redirect
+            if (window.timerManager) {
+                window.timerManager.stop();
+            }
+
             // Call survey's onLoad function
             if (config.onLoad && window.experimentManager) {
                 config.onLoad(window.phaser_scene, window.experimentManager);
@@ -431,10 +479,28 @@ export class LevelManager {
     }
 
     checkFailConditions(levelId, board, player) {
+        const config = this.levels[levelId];
+
+        // Level-specific hard-fail rules declared via config.failConditions.
+        // Currently supports 'carriedAttribute': picking up (carrying) an
+        // object flagged with a given attribute (e.g. a defective box) ends
+        // the level immediately - mirrors the NPC-collision hard fail, so
+        // sensing/checking before acting is required rather than optional.
+        if (config && Array.isArray(config.failConditions)) {
+            for (const rule of config.failConditions) {
+                if (rule.type === 'carriedAttribute') {
+                    const item = board.moveableObjects.find(o => o.id === rule.itemId);
+                    if (item && item.isCarried && item.attributes?.[rule.attribute] === true) {
+                        return { failed: true, reason: rule.reason || 'Picked up a flagged object!' };
+                    }
+                }
+            }
+        }
+
         // Example: Box dropped on floor (not conveyor)
         // This is tricky because we allow dropping on floor for re-arranging.
         // But the user request said: "conditions that should end the game like the box being placed on the floor instead of a conveyour belt"
-        
+
         // Let's implement that specific strict rule:
         // Any box not on a conveyor = FAIL.
         

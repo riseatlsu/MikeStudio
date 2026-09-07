@@ -182,7 +182,17 @@ export class IsoBoard {
     const objs = this.stationaryObjects.filter(o => o.gridRow === row && o.gridCol === col);
     if (!objs.length) return null;
     const zone = objs.find(o => o.isoType === 'zone');
-    return zone || objs[0];
+    if (zone) return zone;
+    // Some levels place a purely decorative, non-collidable border "walls"
+    // tile (see createEdgeWalls in layoutHelpers.js) on the exact same
+    // coordinate as a real obstacle (a pillar/shelf/oil drum/conveyor) for
+    // visual layering - without this, whichever was added to the level's
+    // stationary array first (usually the decorative wall) would win here,
+    // silently hiding the real object from collision AND from sensing
+    // (survey_front/check_object_type would report 'walls' instead of the
+    // actual obstacle standing there).
+    const real = objs.find(o => o.collidable);
+    return real || objs[0];
   }
 
   getMoveableAt(row, col) {

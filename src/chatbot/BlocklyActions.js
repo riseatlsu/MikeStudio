@@ -3,6 +3,8 @@
  * Utility module for manipulating Blockly workspace based on AI responses
  * Provides functions to add, delete, and manage code blocks programmatically
  */
+import * as Blockly from 'blockly';
+import { buildBlockChain } from '../game/blockly/BlockSpecBuilder';
 
 /**
  * Get the Blockly workspace instance
@@ -90,138 +92,87 @@ export function clearWorkspace() {
 }
 
 /**
- * Create a single block and add it to the workspace
- * @param {Object} blockSpec - Block specification {type, fields, children}
- * @returns {Blockly.Block|null} Created block
- */
-function createBlock(blockSpec) {
-    const workspace = getWorkspace();
-    if (!workspace) {
-        console.error('BlocklyActions: Workspace not found');
-        return null;
-    }
-    
-    try {
-        const block = workspace.newBlock(blockSpec.type);
-        
-        // CRITICAL: Initialize block BEFORE setting field values
-        block.initSvg();
-        block.render();
-        
-        // Now set field values (after init)
-        if (blockSpec.fields) {
-            for (const [fieldName, value] of Object.entries(blockSpec.fields)) {
-                try {
-                    block.setFieldValue(value, fieldName);
-                } catch (fieldError) {
-                    console.warn(`BlocklyActions: Failed to set field '${fieldName}' on block '${blockSpec.type}':`, fieldError);
-                }
-            }
-        }
-        
-        // Handle nested children (for control blocks like repeat)
-        if (blockSpec.children && blockSpec.children.length > 0) {
-            let firstChild = null;
-            let currentChild = null;
-            
-            for (let i = 0; i < blockSpec.children.length; i++) {
-                const childBlock = createBlock(blockSpec.children[i]);
-                if (!childBlock) continue;
-                
-                if (i === 0) {
-                    // First child connects to the DO input
-                    firstChild = childBlock;
-                    if (block.getInput('DO')) {
-                        block.getInput('DO').connection.connect(childBlock.previousConnection);
-                    }
-                    currentChild = childBlock;
-                } else {
-                    // Subsequent children chain together
-                    if (currentChild && currentChild.nextConnection && childBlock.previousConnection) {
-                        currentChild.nextConnection.connect(childBlock.previousConnection);
-                    }
-                    currentChild = childBlock;
-                }
-            }
-        }
-        
-        return block;
-    } catch (error) {
-        console.error(`BlocklyActions: Failed to create block type '${blockSpec.type}':`, error);
-        return null;
-    }
-}
-
-/**
- * Add blocks to the workspace based on AI response
+ * Add blocks to the workspace based on AI response.
+ *
+ * Delegates the actual block/input construction to the shared
+ * BlockSpecBuilder (see game/blockly/BlockSpecBuilder.js) so AI-generated
+ * code supports the exact same spec format as level-authored starterBlocks
+ * - including extraState (e.g. controls_if's hasElse) and named value/
+ * statement inputs - rather than the old hardcoded-single-DO-input builder
+ * that used to leave If/Else and sensing blocks disconnected.
+ *
  * @param {Array<Object>} blockSpecs - Array of block specifications
  * @param {boolean} clearFirst - Whether to clear existing blocks first
- * @returns {number} Number of blocks created
+ * @returns {number} Number of top-level blocks created
  */
 export function addBlocks(blockSpecs, clearFirst = false) {
     if (!blockSpecs || blockSpecs.length === 0) {
         console.warn('BlocklyActions: No blocks to add');
         return 0;
     }
-    
+
     const workspace = getWorkspace();
     if (!workspace) {
         console.error('BlocklyActions: Workspace not found');
         return 0;
     }
-    
+
     // Clear workspace if requested
     if (clearFirst) {
         clearWorkspace();
     }
-    
+
     // Get the last block in the current chain
-    let lastBlock = getLastBlock();
+    const lastBlock = getLastBlock();
     if (!lastBlock) {
         console.error('BlocklyActions: Start block not found');
         return 0;
     }
-    
+
+    // Skip any stray custom_start specs the AI might include - it's the
+    // entry point block and already exists in the workspace.
+    const specs = blockSpecs.filter(spec => spec.type !== 'custom_start');
+
+    const firstBlock = buildBlockChain(workspace, specs);
+
     let created = 0;
-    
-    // Create each block in sequence
-    for (const blockSpec of blockSpecs) {
-        if (blockSpec.type === 'custom_start') {
-            continue; // Skip start block (already exists)
-        }
-        
-        const newBlock = createBlock(blockSpec);
-        if (newBlock) {
-            // Connect to the chain
-            if (lastBlock.nextConnection && newBlock.previousConnection) {
-                try {
-                    lastBlock.nextConnection.connect(newBlock.previousConnection);
-                    lastBlock = newBlock;
-                    created++;
-                } catch (connError) {
-                    console.error('BlocklyActions: Failed to connect blocks:', connError);
-                    // Still count as created even if connection failed
-                    created++;
-                }
-            } else {
-                console.warn('BlocklyActions: Could not connect block - missing connections');
-                created++;
+    if (firstBlock) {
+        if (lastBlock.nextConnection && firstBlock.previousConnection) {
+            try {
+                lastBlock.nextConnection.connect(firstBlock.previousConnection);
+            } catch (connError) {
+                console.error('BlocklyActions: Failed to connect AI-generated blocks to program:', connError);
             }
+        } else {
+            console.warn('BlocklyActions: Could not connect AI-generated blocks - missing connections');
+        }
+
+        // Count top-level blocks actually built (walking the chain, not
+        // descending into nested if/loop bodies) for logging/UI feedback.
+        let block = firstBlock;
+        while (block) {
+            created++;
+            block = block.nextConnection?.targetBlock();
         }
     }
-    
+
     // Center view on the start block
     const startBlock = getStartBlock();
     if (startBlock) {
         workspace.centerOnBlock(startBlock.id);
     }
-    
+
     console.log(`BlocklyActions: Created ${created} block(s)`);
     return created;
 }
 
 /**
- * Get current workspace state as an array of block specifications
+ * Get current workspace state as an array of block specifications, in the
+ * SAME {type, fields, extraState?, inputs?} format the AI is asked to write
+ * (see BlockSpecBuilder.js) - this is a full recursive serialization, not
+ * just the top-level chain, so Otto can actually see what's inside an
+ * existing If/Else branch or loop body rather than being told the student's
+ * code is empty past the first level of nesting.
  * @returns {Array<Object>} Array of block specs
  */
 export function getWorkspaceState() {
@@ -230,40 +181,66 @@ export function getWorkspaceState() {
         console.error('BlocklyActions: Workspace not found');
         return [];
     }
-    
-    const blocks = [];
+
     const startBlock = getStartBlock();
-    
-    if (!startBlock) {
-        return blocks;
+    if (!startBlock) return [];
+
+    return serializeBlockChain(startBlock.nextConnection?.targetBlock());
+}
+
+/** Serialize a statement-block chain (following nextConnection) into specs. */
+function serializeBlockChain(block) {
+    const specs = [];
+    let current = block;
+    while (current) {
+        specs.push(serializeBlock(current));
+        current = current.nextConnection?.targetBlock();
     }
-    
-    let currentBlock = startBlock.nextConnection?.targetBlock();
-    
-    while (currentBlock) {
-        const blockSpec = {
-            type: currentBlock.type
-        };
-        
-        // Extract field values
-        const fields = {};
-        currentBlock.inputList.forEach(input => {
-            input.fieldRow.forEach(field => {
-                if (field.name && field.getValue) {
-                    fields[field.name] = field.getValue();
-                }
-            });
+    return specs;
+}
+
+/** Serialize a single block, recursing into any connected statement/value inputs. */
+function serializeBlock(block) {
+    const spec = { type: block.type };
+
+    const fields = {};
+    block.inputList.forEach(input => {
+        input.fieldRow.forEach(field => {
+            if (field.name && field.getValue) {
+                fields[field.name] = field.getValue();
+            }
         });
-        
-        if (Object.keys(fields).length > 0) {
-            blockSpec.fields = fields;
-        }
-        
-        blocks.push(blockSpec);
-        currentBlock = currentBlock.nextConnection?.targetBlock();
+    });
+    if (Object.keys(fields).length > 0) {
+        spec.fields = fields;
     }
-    
-    return blocks;
+
+    if (typeof block.saveExtraState === 'function') {
+        try {
+            const extraState = block.saveExtraState();
+            if (extraState && Object.keys(extraState).length > 0) {
+                spec.extraState = extraState;
+            }
+        } catch (_) { /* block has no meaningful extra state */ }
+    }
+
+    const inputs = {};
+    block.inputList.forEach(input => {
+        if (!input.connection) return;
+        const target = input.connection.targetBlock();
+        if (!target) return;
+
+        if (Blockly && input.connection.type === Blockly.NEXT_STATEMENT) {
+            inputs[input.name] = serializeBlockChain(target);
+        } else if (Blockly && input.connection.type === Blockly.INPUT_VALUE) {
+            inputs[input.name] = serializeBlock(target);
+        }
+    });
+    if (Object.keys(inputs).length > 0) {
+        spec.inputs = inputs;
+    }
+
+    return spec;
 }
 
 /**

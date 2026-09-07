@@ -10,6 +10,7 @@ import { BlocklyManager } from './game/blockly/BlocklyManager';
 import { experimentManager } from './experiment/ExperimentManager.js';
 import { chatbotManager } from './chatbot/ChatbotManager.js';
 import { quitManager } from './experiment/QuitManager.js';
+import { timerManager } from './experiment/TimerManager.js';
 import dataLogger from './utils/DataLogger.js';
 import terminalUI from './game/terminal/TerminalUI.js';
 import { dialogueUI } from './game/dialogue/DialogueUI.js';
@@ -55,6 +56,10 @@ function initializeUI() {
 
     // Wire up the "Quit Study" button/confirmation flow
     quitManager.init();
+
+    // Wire up the session timer / "time's up" modal, resuming an
+    // already-running timer from localStorage if one exists
+    timerManager.init();
 
     // Init the NPC dialogue box (shown before each level loads)
     dialogueUI.init();

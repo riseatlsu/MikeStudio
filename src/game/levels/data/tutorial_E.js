@@ -9,15 +9,16 @@ const walls = createEdgeWalls([0, 2, 4], [1, 3, 5]);
 
 export const TutorialE = {
     id: "tutorial_E",
-    title: "Tutorial E: Quality Control",
-    description: "Check each box before you load it — only good boxes should reach the output conveyor.",
-    instructions: `Quality control just flagged a problem: one of the boxes on the input line is defective, and it must never reach a customer. Stand on each <span class="ui-ref">green pickup zone</span> and use <span class="ui-ref">Object Ahead is broken</span> inside an <span class="ui-ref">If / Else</span> block to check the box in front of you before deciding what to do. If the box is broken, leave it where it is. If it's good, use <span class="ui-ref">Pick Up Object</span> and carry it to the <span class="ui-ref">red dropoff zone</span>, then use <span class="ui-ref">Drop Object</span> to deliver it. Try dropping a <span class="ui-ref">Print</span> block in each branch so you can watch your decisions play out in the <span class="ui-ref">Terminal</span> panel.`,
+    title: "Tutorial E: Share the Floor",
+    description: "Another robot is patrolling the corridor ahead — sense when it's clear before crossing.",
+    instructions: `You're not the only robot on the warehouse floor today. A patrol robot is walking back and forth across the corridor between you and the dropoff zone, and driving straight into it will get you both stuck. Pick up the box, then use <span class="ui-ref">Sense Object Ahead</span> inside a <span class="ui-ref">While</span> loop to check whether a <span class="ui-ref">robot</span> is blocking your path — if it is, use the new <span class="ui-ref">Wait</span> block to pause a moment and check again, instead of guessing when it'll be safe to move. Once the loop ends, the way is clear: move forward to the <span class="ui-ref">red dropoff zone</span> and use <span class="ui-ref">Drop Object</span> to finish the delivery.`,
     isExperiment: false,
     chatbotEnabled: false,
 
     dialogue: [
-        "Got a call from quality control this morning — a batch came in with at least one defective unit mixed in, and it can not go out the door.",
-        "I need you to have the robot check each box before it loads it. Anything flagged broken stays put. Everything else ships."
+        "Careful today — corporate leased us a second unit to help with the backlog, and it's already out there running its own patrol route.",
+        "Robots don't yield to each other, so if yours drives straight into it, you'll both be stuck till someone walks over and resets things. Sense it, wait it out, then go.",
+        "That's the last of your training runs, by the way. Everything after this is real work — actual orders, actual deadlines. You ready?"
     ],
 
     map: {
@@ -28,44 +29,68 @@ export const TutorialE = {
 
     objects: {
         stationary: [
-            ...createHorizontalConveyor(0, 1, "tutorial_e_input"),
-            { type: "pickup_zone", row: 1, col: 1, id: "tutorial_e_pickup_good_zone", attributes: { allowDrop: true, frame: 2 } },
-            { type: "pickup_zone", row: 1, col: 3, id: "tutorial_e_pickup_broken_zone", attributes: { allowDrop: true, frame: 2 } },
+            ...createHorizontalConveyor(0, 2, "tutorial_e_input"),
+            { type: "pickup_zone", row: 1, col: 3, id: "tutorial_e_pickup_zone", attributes: { allowDrop: true, frame: 2 } },
 
-            ...createHorizontalConveyor(4, 2, "tutorial_e_output"),
-            { type: "dropoff_zone", row: 3, col: 3, id: "tutorial_e_dropoff_zone", attributes: { allowDrop: true, frame: 0 } },
+            ...createHorizontalConveyor(5, 2, "tutorial_e_output"),
+            { type: "dropoff_zone", row: 4, col: 3, id: "tutorial_e_dropoff_zone", attributes: { allowDrop: true, frame: 0 } },
 
             ...walls,
 
-            // Decorative clutter
-            { type: "OilDrums", row: 5, col: 0, id: "tutorial_e_drum", attributes: { allowDrop: false, frame: 1 } }
+            // Shelving forces single-file travel down column 3, while row 2
+            // stays fully open as the patrol robot's corridor.
+            { type: "shelves", row: 1, col: 2, id: "tutorial_e_shelf_a", attributes: { allowDrop: false, frame: 0 } },
+            { type: "shelves", row: 1, col: 4, id: "tutorial_e_shelf_b", attributes: { allowDrop: false, frame: 3 } },
+            { type: "shelves", row: 3, col: 2, id: "tutorial_e_shelf_c", attributes: { allowDrop: false, frame: 5 } },
+            { type: "shelves", row: 3, col: 4, id: "tutorial_e_shelf_d", attributes: { allowDrop: false, frame: 7 } },
+            { type: "shelves", row: 4, col: 2, id: "tutorial_e_shelf_e", attributes: { allowDrop: false, frame: 0 } },
+            { type: "shelves", row: 4, col: 4, id: "tutorial_e_shelf_f", attributes: { allowDrop: false, frame: 3 } }
         ],
         moveable: [
-            { type: "box", id: "tutorial_e_box_good", row: 0, col: 1, attributes: {} },
-            { type: "box", id: "tutorial_e_box_broken", row: 0, col: 3, attributes: { broken: true } }
+            { type: "box", id: "tutorial_e_box", row: 0, col: 3, attributes: {} }
         ]
     },
 
     player: {
         startRow: 1,
-        startCol: 2,
+        startCol: 3,
         startDir: NORTH,
         scale: 1.5
     },
 
+    npcRobots: [
+        {
+            id: "tutorial_e_guard",
+            path: [
+                { row: 2, col: 1 },
+                { row: 2, col: 2 },
+                { row: 2, col: 3 },
+                { row: 2, col: 4 },
+                { row: 2, col: 5 }
+            ],
+            ticksPerStep: 2,
+            // Patrol starts at a random point along the path each run, so a
+            // hardcoded fixed-turn-count "wait" can't reliably time a
+            // crossing - only actually sensing and waiting works every time.
+            randomizeStart: true
+        }
+    ],
+
     winConditions: [
-        { type: "itemAtPos", itemId: "tutorial_e_box_good", row: 4, col: 3 },
-        { type: "itemNotAtPos", itemId: "tutorial_e_box_broken", row: 4, col: 3 }
+        { type: "itemAtPos", itemId: "tutorial_e_box", row: 5, col: 3 }
     ],
 
     maxSteps: 20,
 
+    // All blocks unlocked - this is the last tutorial before the graded
+    // levels, so the full toolbox opens up here.
     allowedBlocks: {
-        actions: ['move_forward', 'turn_clockwise', 'turn_counter_clockwise', 'pick_object', 'drop_object'],
-        sensing: ['survey_front', 'check_attribute'],
-        logic: ['controls_if'],
-        math: false,
-        text: ['print_message'],
-        loops: false
+        actions: true,
+        sensing: true,
+        logic: true,
+        math: true,
+        text: true,
+        loops: true,
+        variables: true
     }
 };
