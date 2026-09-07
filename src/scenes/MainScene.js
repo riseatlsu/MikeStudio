@@ -163,23 +163,50 @@ export class MainScene extends Phaser.Scene {
 
     // Make LevelManager globally available
     window.LevelManager = this.levelManager;
-    
+
     // Make scene available globally for survey access
     window.phaser_scene = this;
-    
-    // Set level progression based on assigned group (if already assigned)
-    if (window.experimentManager && window.experimentManager.groupId) {
-        this.levelManager.setLevelProgression(
-            window.experimentManager.groupId,
-            window.experimentManager.getLatinSquareRow()
-        );
-    }
 
-    // Load the saved current level (or first level in progression if first time)
-    const savedLevel = this.levelManager.getCurrentLevel();
-    
-    // Use loadLevelById to ensure chatbot initialization happens if needed
-    this.levelManager.loadLevelById(savedLevel);
+    const inSandbox = Boolean(window.experimentManager && window.experimentManager.sandboxMode);
+    if (inSandbox) {
+        // Sandbox.js drives its own progression/level choice once it finishes
+        // setting up (see initializeSandbox() in src/sandbox/sandbox.js) - mark
+        // sandbox mode on the LevelManager now so getCurrentLevel()/loadLevelById()
+        // never touch real-study localStorage, and skip the auto-resume below so
+        // it can't race with (or get overridden by) that explicit sandbox load.
+        this.levelManager.setSandboxMode(true);
+    } else {
+        // Phaser boots and this create() callback fires independently of the
+        // consent overlay (which is just a DOM element on top of the canvas)
+        // - without this gate, a brand-new participant would have tutorial_A
+        // (and its Mack dialogue box) loaded and shown before ever touching
+        // the consent checkbox. Read the cookie directly rather than
+        // window.experimentManager.groupId/latinSquareRow, since those are
+        // only populated once index.html's DOMContentLoaded handler calls
+        // experimentManager.initialize() - which may not have run yet at
+        // this point - while getCookie() is a stateless, synchronous read.
+        const hasConsented = window.experimentManager?.getCookie?.('pair_consented') === 'true';
+
+        if (hasConsented) {
+            const groupId = window.experimentManager.groupId || window.experimentManager.getCookie('pair_group');
+            if (groupId) {
+                this.levelManager.setLevelProgression(
+                    groupId,
+                    window.experimentManager.getLatinSquareRow()
+                );
+            }
+
+            // Load the saved current level (or first level in progression if first time)
+            const savedLevel = this.levelManager.getCurrentLevel();
+
+            // Use loadLevelById to ensure chatbot initialization happens if needed
+            this.levelManager.loadLevelById(savedLevel);
+        } else {
+            // No level loaded yet - index.html's consent button handler calls
+            // LevelManager.loadLevelById() itself once consent is granted.
+            console.log('MainScene: Waiting for consent before loading the first level.');
+        }
+    }
 
     // Handle Resize Events to keep board centered
     this.scale.on('resize', (gameSize) => {
@@ -258,11 +285,19 @@ export class MainScene extends Phaser.Scene {
 
       // 3. Spawn NPC robots (patrolling non-player robots), if this level has any
       (config.npcRobots || []).forEach(npcCfg => {
-          const start = npcCfg.path[0];
+          // randomizeStart: spawn mid-patrol at a random point in the path
+          // instead of always path[0], so a participant can't hardcode a
+          // fixed turn-count "wait" that happens to dodge a deterministic
+          // patrol - they have to actually sense and wait.
+          const startIndex = npcCfg.randomizeStart
+              ? Math.floor(Math.random() * npcCfg.path.length)
+              : 0;
+          const start = npcCfg.path[startIndex];
           const npc = new IsoNPC(this, this.isoBoard, start.row, start.col, 'robot', {
               id: npcCfg.id,
               path: npcCfg.path,
               ticksPerStep: npcCfg.ticksPerStep,
+              startIndex,
               scale: playerConfig.scale
           });
           this.isoBoard.allSprites.push(npc.sprite);

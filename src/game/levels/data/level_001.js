@@ -64,17 +64,18 @@ export const Level1 = {
     },
 
     winConditions: [
-         { type: "itemAtPos", itemId: "level1_box", row: 7, col: 5 }
+         { type: "itemAtPos", itemId: "level1_box", row: 7, col: 2 }
     ],
 
     maxSteps: 18,
 
     allowedBlocks: {
-        actions: ['move_forward', 'turn_clockwise', 'turn_counter_clockwise', 'pick_object', 'drop_object'],
-        sensing: false,
-        logic: false,
-        math: false,
-        text: false,
-        loops: false
+        actions: true,
+        sensing: true,
+        logic: true,
+        math: true,
+        text: true,
+        loops: true,
+        variables: true
     }
 };

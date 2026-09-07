@@ -1071,6 +1071,26 @@ body.offline-mode .main-container {
 }
 
 /* ===== QUIT STUDY BUTTON ===== */
+.session-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(253, 208, 35, 0.4);
+    color: var(--lsu-gold);
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.session-timer.session-timer-low {
+    border-color: #dc3545;
+    color: #ff8080;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
 .quit-study-btn {
     display: flex;
     align-items: center;
@@ -1220,6 +1240,85 @@ body.offline-mode .main-container {
 .quit-confirm-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+/* ===== TIME'S UP MODAL ===== */
+.time-up-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.time-up-modal-overlay.show {
+    display: flex;
+}
+
+.time-up-modal {
+    background: white;
+    border-radius: 20px;
+    max-width: 520px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUpBounce 0.4s ease-out;
+}
+
+.time-up-modal-header {
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(70, 29, 124, 0.95), rgba(90, 44, 160, 0.95));
+}
+
+.time-up-modal-icon {
+    font-size: 3rem;
+    color: var(--lsu-gold);
+    margin-bottom: 0.5rem;
+}
+
+.time-up-modal-title {
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.time-up-modal-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.time-up-modal-message {
+    color: #495057;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.time-up-modal-btn {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--lsu-purple);
+    background: var(--lsu-gold);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.time-up-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(253, 208, 35, 0.4);
 }
 
 .quit-confirm-btn:disabled {

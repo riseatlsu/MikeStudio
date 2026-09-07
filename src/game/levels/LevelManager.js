@@ -280,7 +280,13 @@ export class LevelManager {
         // Check if this is a survey level
         if (config.type === 'survey') {
             console.log('Loading survey level');
-            
+
+            // Session timer's job is done once the survey is reached, whether
+            // that happened naturally or via the "time's up" redirect
+            if (window.timerManager) {
+                window.timerManager.stop();
+            }
+
             // Call survey's onLoad function
             if (config.onLoad && window.experimentManager) {
                 config.onLoad(window.phaser_scene, window.experimentManager);
@@ -473,10 +479,28 @@ export class LevelManager {
     }
 
     checkFailConditions(levelId, board, player) {
+        const config = this.levels[levelId];
+
+        // Level-specific hard-fail rules declared via config.failConditions.
+        // Currently supports 'carriedAttribute': picking up (carrying) an
+        // object flagged with a given attribute (e.g. a defective box) ends
+        // the level immediately - mirrors the NPC-collision hard fail, so
+        // sensing/checking before acting is required rather than optional.
+        if (config && Array.isArray(config.failConditions)) {
+            for (const rule of config.failConditions) {
+                if (rule.type === 'carriedAttribute') {
+                    const item = board.moveableObjects.find(o => o.id === rule.itemId);
+                    if (item && item.isCarried && item.attributes?.[rule.attribute] === true) {
+                        return { failed: true, reason: rule.reason || 'Picked up a flagged object!' };
+                    }
+                }
+            }
+        }
+
         // Example: Box dropped on floor (not conveyor)
         // This is tricky because we allow dropping on floor for re-arranging.
         // But the user request said: "conditions that should end the game like the box being placed on the floor instead of a conveyour belt"
-        
+
         // Let's implement that specific strict rule:
         // Any box not on a conveyor = FAIL.
         

@@ -7,9 +7,9 @@ import {
 
 const walls = createEdgeWalls([0, 2, 4], [1, 3, 5]);
 
-export const TutorialF = {
-    id: "tutorial_F",
-    title: "Tutorial F: Share the Floor",
+export const TutorialE = {
+    id: "tutorial_E",
+    title: "Tutorial E: Share the Floor",
     description: "Another robot is patrolling the corridor ahead — sense when it's clear before crossing.",
     instructions: `You're not the only robot on the warehouse floor today. A patrol robot is walking back and forth across the corridor between you and the dropoff zone, and driving straight into it will get you both stuck. Pick up the box, then use <span class="ui-ref">Sense Object Ahead</span> inside a <span class="ui-ref">While</span> loop to check whether a <span class="ui-ref">robot</span> is blocking your path — if it is, use the new <span class="ui-ref">Wait</span> block to pause a moment and check again, instead of guessing when it'll be safe to move. Once the loop ends, the way is clear: move forward to the <span class="ui-ref">red dropoff zone</span> and use <span class="ui-ref">Drop Object</span> to finish the delivery.`,
     isExperiment: false,
@@ -29,25 +29,25 @@ export const TutorialF = {
 
     objects: {
         stationary: [
-            ...createHorizontalConveyor(0, 2, "tutorial_f_input"),
-            { type: "pickup_zone", row: 1, col: 3, id: "tutorial_f_pickup_zone", attributes: { allowDrop: true, frame: 2 } },
+            ...createHorizontalConveyor(0, 2, "tutorial_e_input"),
+            { type: "pickup_zone", row: 1, col: 3, id: "tutorial_e_pickup_zone", attributes: { allowDrop: true, frame: 2 } },
 
-            ...createHorizontalConveyor(5, 2, "tutorial_f_output"),
-            { type: "dropoff_zone", row: 4, col: 3, id: "tutorial_f_dropoff_zone", attributes: { allowDrop: true, frame: 0 } },
+            ...createHorizontalConveyor(5, 2, "tutorial_e_output"),
+            { type: "dropoff_zone", row: 4, col: 3, id: "tutorial_e_dropoff_zone", attributes: { allowDrop: true, frame: 0 } },
 
             ...walls,
 
             // Shelving forces single-file travel down column 3, while row 2
             // stays fully open as the patrol robot's corridor.
-            { type: "shelves", row: 1, col: 2, id: "tutorial_f_shelf_a", attributes: { allowDrop: false, frame: 0 } },
-            { type: "shelves", row: 1, col: 4, id: "tutorial_f_shelf_b", attributes: { allowDrop: false, frame: 3 } },
-            { type: "shelves", row: 3, col: 2, id: "tutorial_f_shelf_c", attributes: { allowDrop: false, frame: 5 } },
-            { type: "shelves", row: 3, col: 4, id: "tutorial_f_shelf_d", attributes: { allowDrop: false, frame: 7 } },
-            { type: "shelves", row: 4, col: 2, id: "tutorial_f_shelf_e", attributes: { allowDrop: false, frame: 0 } },
-            { type: "shelves", row: 4, col: 4, id: "tutorial_f_shelf_f", attributes: { allowDrop: false, frame: 3 } }
+            { type: "shelves", row: 1, col: 2, id: "tutorial_e_shelf_a", attributes: { allowDrop: false, frame: 0 } },
+            { type: "shelves", row: 1, col: 4, id: "tutorial_e_shelf_b", attributes: { allowDrop: false, frame: 3 } },
+            { type: "shelves", row: 3, col: 2, id: "tutorial_e_shelf_c", attributes: { allowDrop: false, frame: 5 } },
+            { type: "shelves", row: 3, col: 4, id: "tutorial_e_shelf_d", attributes: { allowDrop: false, frame: 7 } },
+            { type: "shelves", row: 4, col: 2, id: "tutorial_e_shelf_e", attributes: { allowDrop: false, frame: 0 } },
+            { type: "shelves", row: 4, col: 4, id: "tutorial_e_shelf_f", attributes: { allowDrop: false, frame: 3 } }
         ],
         moveable: [
-            { type: "box", id: "tutorial_f_box", row: 0, col: 3, attributes: {} }
+            { type: "box", id: "tutorial_e_box", row: 0, col: 3, attributes: {} }
         ]
     },
 
@@ -60,7 +60,7 @@ export const TutorialF = {
 
     npcRobots: [
         {
-            id: "tutorial_f_guard",
+            id: "tutorial_e_guard",
             path: [
                 { row: 2, col: 1 },
                 { row: 2, col: 2 },
@@ -68,12 +68,16 @@ export const TutorialF = {
                 { row: 2, col: 4 },
                 { row: 2, col: 5 }
             ],
-            ticksPerStep: 2
+            ticksPerStep: 2,
+            // Patrol starts at a random point along the path each run, so a
+            // hardcoded fixed-turn-count "wait" can't reliably time a
+            // crossing - only actually sensing and waiting works every time.
+            randomizeStart: true
         }
     ],
 
     winConditions: [
-        { type: "itemAtPos", itemId: "tutorial_f_box", row: 5, col: 3 }
+        { type: "itemAtPos", itemId: "tutorial_e_box", row: 5, col: 3 }
     ],
 
     maxSteps: 20,

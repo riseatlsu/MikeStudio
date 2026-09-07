@@ -36,13 +36,14 @@ src/
 │   │   ├── index.js           # Level registry
 │   │   ├── data/              # Individual level definitions
 │   │   │   ├── tutorial_A.js  # Basic movement tutorial
-│   │   │   ├── tutorial_B.js  # Advanced blocks tutorial
-│   │   │   ├── tutorial_C.js  # Chatbot interaction tutorial
-│   │   │   ├── level_001.js   # Experimental level 1
-│   │   │   ├── level_002.js   # Experimental level 2
-│   │   │   ├── level_003.js   # Experimental level 3
-│   │   │   ├── level_004.js   # Experimental level 4
-│   │   │   ├── level_005.js   # Experimental level 5
+│   │   │   ├── tutorial_B.js  # Loops + chatbot (Otto) introduction
+│   │   │   ├── tutorial_C.js  # Sensing + conditional logic tutorial
+│   │   │   ├── tutorial_D.js  # Attribute-based sorting tutorial
+│   │   │   ├── tutorial_E.js  # NPC avoidance / While+Wait tutorial
+│   │   │   ├── level_001.js   # Easy development
+│   │   │   ├── level_002.js   # Hard development (NPC + broken-box sensing)
+│   │   │   ├── level_003.js   # Easy maintenance
+│   │   │   ├── level_004.js   # Hard maintenance (NPC + broken-box sensing)
 │   │   │   └── survey_final.js # Post-study survey level
 │   │   ├── BLOCKS_CONFIG_GUIDE.md # Guide for level block restrictions
 │   │   └── LEVEL_TYPES_GUIDE.md   # Level schema documentation

@@ -7,9 +7,9 @@ import {
 
 const walls = createEdgeWalls([0, 2, 4, 6], [1, 3, 5, 7]);
 
-export const Level4 = {
-    id: "level_004",
-    title: "Level 4: Easy Code Maintenance",
+export const Level3 = {
+    id: "level_003",
+    title: "Level 3: Easy Code Maintenance",
     description: "Find the missing block that prevents the robot from picking up the box.",
     instructions: `The starter code moves the robot to the <span class="ui-ref">green pickup zone</span> and then all the way to the <span class="ui-ref">red dropoff zone</span> — but the box never moves. Press <span class="ui-ref">Run Code</span> to watch what happens, then figure out which block is missing and drag it into the right spot in the program. Once the fix is in place, run the code again to confirm the box reaches the output conveyor.`,
     isExperiment: true,
@@ -28,22 +28,22 @@ export const Level4 = {
 
     objects: {
         stationary: [
-            ...createHorizontalConveyor(0, 2, "level4_input"),
-            { type: "pickup_zone", row: 1, col: 3, id: "level4_input_zone", attributes: { allowDrop: true, frame: 1 } },
+            ...createHorizontalConveyor(0, 2, "level3_input"),
+            { type: "pickup_zone", row: 1, col: 3, id: "level3_input_zone", attributes: { allowDrop: true, frame: 1 } },
 
-            ...createHorizontalConveyor(7, 2, "level4_output"),
-            { type: "dropoff_zone", row: 6, col: 3, id: "level4_output_zone", attributes: { allowDrop: true, frame: 0 } },
+            ...createHorizontalConveyor(7, 2, "level3_output"),
+            { type: "dropoff_zone", row: 6, col: 3, id: "level3_output_zone", attributes: { allowDrop: true, frame: 0 } },
 
             ...walls,
 
-            { type: "shelves", row: 2, col: 6, id: "level4_shelf_a", attributes: { allowDrop: false, frame: 0 } },
-            { type: "shelves", row: 2, col: 7, id: "level4_shelf_b", attributes: { allowDrop: false, frame: 3 } },
-            { type: "OilDrums", row: 3, col: 6, id: "level4_drum_a", attributes: { allowDrop: false, frame: 1 } },
-            { type: "OilDrums", row: 4, col: 1, id: "level4_drum_b", attributes: { allowDrop: false, frame: 0 } },
-            { type: "pillars", row: 4, col: 5, id: "level4_pillar_a", attributes: { allowDrop: false, frame: 1 } }
+            { type: "shelves", row: 2, col: 6, id: "level3_shelf_a", attributes: { allowDrop: false, frame: 0 } },
+            { type: "shelves", row: 2, col: 7, id: "level3_shelf_b", attributes: { allowDrop: false, frame: 3 } },
+            { type: "OilDrums", row: 3, col: 6, id: "level3_drum_a", attributes: { allowDrop: false, frame: 1 } },
+            { type: "OilDrums", row: 4, col: 1, id: "level3_drum_b", attributes: { allowDrop: false, frame: 0 } },
+            { type: "pillars", row: 4, col: 5, id: "level3_pillar_a", attributes: { allowDrop: false, frame: 1 } }
         ],
         moveable: [
-            { type: "box", id: "level4_box", row: 0, col: 3, attributes: {} }
+            { type: "box", id: "level3_box", row: 0, col: 3, attributes: {} }
         ]
     },
 
@@ -69,17 +69,18 @@ export const Level4 = {
     ],
 
     winConditions: [
-        { type: "itemAtPos", itemId: "level4_box", row: 7, col: 3 }
+        { type: "itemAtPos", itemId: "level3_box", row: 7, col: 3 }
     ],
 
     maxSteps: 14,
 
     allowedBlocks: {
-        actions: ['move_forward', 'turn_clockwise', 'turn_counter_clockwise', 'pick_object', 'drop_object'],
-        sensing: false,
-        logic: false,
-        math: false,
-        text: false,
-        loops: false
+        actions: true,
+        sensing: true,
+        logic: true,
+        math: true,
+        text: true,
+        loops: true,
+        variables: true
     }
 };

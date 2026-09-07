@@ -311,6 +311,12 @@ export class IsoPlayer extends MoveableObject {
               });
 
               console.log(`Picked up object at (${front.row}, ${front.col})`);
+
+              // Check fail conditions right away (e.g. picking up a flagged/
+              // defective object without sensing it first) - don't wait for
+              // a drop to catch it, mirroring the NPC-collision hard fail.
+              this.checkLevelConditions();
+
               await this.scene.gameClock.waitTicks(1);
               return true;
           }

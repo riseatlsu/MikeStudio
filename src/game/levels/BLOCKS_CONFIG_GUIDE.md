@@ -50,6 +50,7 @@ as **"Movements"** and `logic` displays as **"Conditionals"**.
 ### Sensing Category
 - `survey_front` - "Sense Object Ahead" - get type of object in front
 - `check_attribute` - "Object Ahead is ___" - check a tagged attribute of the surveyed object; the blank is a dropdown of the known attribute set (`broken`, `fragile`, `priority`, `hazard`), not free text
+- `check_object_type` - "Object Ahead is a ___" - check whether the object in front matches a specific type; the blank is a dropdown of survey_front's actual possible return values (`wall`, `box`, `conveyor`, `pillar`, `shelf`, `oil drum`, `floor`, `robot`), not free text. Note static obstacles each report their own specific type - a pillar reports as `pillars`, not the generic `wall` - so pick the matching option rather than assuming "wall" covers all obstacles. A one-block shortcut for the common "am I facing a wall/robot/etc." check that would otherwise need `survey_front` + `logic_compare` + a `text` block typed to match exactly.
 
 ### Logic Category (displayed as "Conditionals")
 - `controls_if` - If statement (simple)

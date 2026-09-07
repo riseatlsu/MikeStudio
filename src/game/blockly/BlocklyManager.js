@@ -1,6 +1,7 @@
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import './GameAPI'; // Ensure API is loaded
+import { buildBlockChain } from './BlockSpecBuilder';
 
 // Monkey-patch deprecated function to silence console warning in v11/v12
 if (Blockly.Workspace.prototype.getAllVariables && !Blockly.Workspace.prototype.getAllVariables.patched) {
@@ -23,6 +24,25 @@ const ATTRIBUTE_OPTIONS = [
     ["fragile", "fragile"],
     ["priority", "priority"],
     ["hazard", "hazard"]
+];
+
+// The exact set of strings GameAPI.survey().type can return (see GameAPI.js
+// and IsoBoard.addStationaryObject's objType assignment). Used by
+// check_object_type's dropdown so students pick from real options instead
+// of having to know/free-type the exact survey_front string to compare
+// against with a separate logic_compare + text block. Static obstacles each
+// report their own specific type (a pillar reports 'pillars', NOT 'wall' -
+// 'wall' is reserved for an out-of-bounds/off-map tile with no object at
+// all), so they're listed individually rather than lumped under "wall".
+const OBJECT_TYPE_OPTIONS = [
+    ["wall (out of bounds)", "wall"],
+    ["box", "box"],
+    ["conveyor", "conveyor"],
+    ["pillar", "pillars"],
+    ["shelf", "shelves"],
+    ["oil drum", "oilDrums"],
+    ["floor", "floor"],
+    ["robot", "robot"]
 ];
 
 export class BlocklyManager {
@@ -220,8 +240,9 @@ export class BlocklyManager {
      * Block reference:
      *   Actions  move_forward · turn_clockwise · turn_counter_clockwise
      *            pick_object · drop_object
-     *   Sensing  survey_front (value→String)
+     *   Sensing  survey_front (value→String: 'wall'|'box'|'conveyor'|'pillars'|'shelves'|'oilDrums'|'floor'|'robot')
      *            check_attribute  fields:{ ATTR:'broken' }  (value→Boolean)
+     *            check_object_type  fields:{ TYPE:'wall'|'box'|'conveyor'|'pillars'|'shelves'|'oilDrums'|'floor'|'robot' }  (value→Boolean)
      *   Loops    controls_repeat_ext  inputs:{ TIMES:{math_number}, DO:[...] }
      *            controls_whileUntil  fields:{ MODE:'WHILE'|'UNTIL' }
      *                                 inputs:{ BOOL:{...}, DO:[...] }
@@ -247,69 +268,10 @@ export class BlocklyManager {
         const starterBlocks = this.currentLevelConfig?.starterBlocks;
         if (!Array.isArray(starterBlocks) || starterBlocks.length === 0) return;
 
-        const firstBlock = this._buildBlockChain(starterBlocks);
+        const firstBlock = buildBlockChain(this.workspace, starterBlocks);
         if (firstBlock && startBlock.nextConnection && firstBlock.previousConnection) {
             startBlock.nextConnection.connect(firstBlock.previousConnection);
         }
-    }
-
-    /** Build a linear chain of statement blocks; returns the first block. */
-    _buildBlockChain(specs) {
-        if (!Array.isArray(specs) || specs.length === 0) return null;
-        let first = null;
-        let prev = null;
-        for (const spec of specs) {
-            const block = this._buildBlockFromSpec(spec);
-            if (!block) continue;
-            if (!first) first = block;
-            if (prev?.nextConnection && block.previousConnection) {
-                prev.nextConnection.connect(block.previousConnection);
-            }
-            prev = block;
-        }
-        return first;
-    }
-
-    /** Recursively build a single block and wire its inputs. */
-    _buildBlockFromSpec(spec) {
-        if (!spec?.type) return null;
-
-        const block = this.workspace.newBlock(spec.type);
-
-        // Apply extra state before initSvg so dynamic inputs are created in time
-        if (spec.extraState && typeof block.loadExtraState === 'function') {
-            block.loadExtraState(spec.extraState);
-        }
-
-        block.initSvg();
-        block.render();
-
-        if (spec.fields) {
-            for (const [name, value] of Object.entries(spec.fields)) {
-                try { block.setFieldValue(String(value), name); } catch (_) {}
-            }
-        }
-
-        if (spec.inputs) {
-            for (const [inputName, inputValue] of Object.entries(spec.inputs)) {
-                const input = block.getInput(inputName);
-                if (!input?.connection) continue;
-
-                if (Array.isArray(inputValue)) {
-                    const firstInChain = this._buildBlockChain(inputValue);
-                    if (firstInChain?.previousConnection) {
-                        input.connection.connect(firstInChain.previousConnection);
-                    }
-                } else if (inputValue && typeof inputValue === 'object') {
-                    const valueBlock = this._buildBlockFromSpec(inputValue);
-                    if (valueBlock?.outputConnection) {
-                        input.connection.connect(valueBlock.outputConnection);
-                    }
-                }
-            }
-        }
-
-        return block;
     }
 
     /**
@@ -370,7 +332,8 @@ export class BlocklyManager {
             ],
             sensing: [
                 { kind: "block", type: "survey_front" },
-                { kind: "block", type: "check_attribute" }
+                { kind: "block", type: "check_attribute" },
+                { kind: "block", type: "check_object_type" }
             ],
             logic: [
                 { kind: "block", type: "controls_if" },
@@ -568,7 +531,7 @@ export class BlocklyManager {
                 this.appendDummyInput().appendField("Sense Object Ahead");
                 this.setOutput(true, "String");
                 this.setColour(210);
-                this.setTooltip("Returns the type of object in front: 'wall', 'box', 'conveyor', 'floor'.");
+                this.setTooltip("Returns the type of object in front: 'wall', 'box', 'conveyor', 'pillars', 'shelves', 'oilDrums', 'floor', or 'robot'.");
             }
         };
 
@@ -585,6 +548,23 @@ export class BlocklyManager {
                 this.setOutput(true, "Boolean");
                 this.setColour(210);
                 this.setTooltip("Checks if the object in front has a specific tag/attribute.");
+            }
+        };
+
+        // 8b. Sensing: Check Object Type
+        // Does the object in front match a specific type? A dropdown-based
+        // shortcut for the common "am I facing a wall/robot/etc." check, so
+        // students pick a real option instead of needing to know the exact
+        // string survey_front returns and wire up a separate logic_compare +
+        // text block to compare against it.
+        Blockly.Blocks['check_object_type'] = {
+            init: function () {
+                this.appendDummyInput()
+                    .appendField("Object Ahead is a")
+                    .appendField(new Blockly.FieldDropdown(OBJECT_TYPE_OPTIONS), "TYPE");
+                this.setOutput(true, "Boolean");
+                this.setColour(210);
+                this.setTooltip("Checks if the object directly in front matches the selected type (wall, box, conveyor, floor, or robot).");
             }
         };
 
@@ -651,6 +631,11 @@ export class BlocklyManager {
         javascriptGenerator.forBlock['check_attribute'] = function (block) {
             const attr = block.getFieldValue('ATTR');
             return [`((await GameAPI.survey()).attributes['${attr}'] === true)`, javascriptGenerator.ORDER_ATOMIC];
+        };
+
+        javascriptGenerator.forBlock['check_object_type'] = function (block) {
+            const type = block.getFieldValue('TYPE');
+            return [`((await GameAPI.survey()).type === '${type}')`, javascriptGenerator.ORDER_ATOMIC];
         };
 
         javascriptGenerator.forBlock['print_message'] = function (block) {

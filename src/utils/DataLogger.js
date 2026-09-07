@@ -8,15 +8,19 @@
 // 
 // CONFIGURING COLLECTION NAMES:
 // By default, data is stored in:
-//   - 'participants' collection (main documents)
-//   - 'events' sub-collection (under each participant)
+//   - 'study1_participants' collection (main documents)
+//   - 'study1_events' sub-collection (under each participant)
+// (Renamed from the original 'participants'/'events' defaults when real data
+// collection started, so pilot/dev testing data - which is still sitting in
+// 'participants'/'events' - never gets mixed in with real participant data.
+// If you start a second study/wave, bump this to 'study2_*', etc.)
 //
 // To change collection names, call setCollectionNames() before initialization:
 //   import dataLogger from './utils/DataLogger.js';
 //   dataLogger.setCollectionNames('experiment_participants', 'user_events');
 //   dataLogger.initialize();
 //
-// Or modify the defaults in the constructor (lines 30-31):
+// Or modify the defaults in the constructor below:
 //   this.participantsCollection = 'your_collection_name';
 //   this.eventsCollection = 'your_events_name';
 //
@@ -84,8 +88,11 @@ class DataLogger {
         this.auth = getAuth(this.app);
 
         // Collection names (configurable)
-        this.participantsCollection = 'participants';
-        this.eventsCollection = 'events';
+        // Switched to 'study1_*' for real participant data collection - the
+        // old 'participants'/'events' collections contain pilot/dev testing
+        // data and should NOT be mixed in with the real study.
+        this.participantsCollection = 'study1_participants';
+        this.eventsCollection = 'study1_events';
 
         // State
         this.currentUserId = null;
