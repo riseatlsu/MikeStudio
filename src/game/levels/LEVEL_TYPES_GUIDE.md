@@ -42,21 +42,28 @@ The pAIrStudio platform supports two types of levels:
   ```
 
 ### `dialogue` (Optional)
-- **Type**: Array of strings
+- **Type**: Array of strings, or objects `{ text, requiresChatbot }`
 - **Default**: none (no dialogue shown)
 - **Purpose**: Pokemon-style NPC dialogue box shown once per participant before this level loads, telling the "new hire training at Ironhaul Logistics" story (see `src/game/dialogue/DialogueUI.js`). Blocking - the player must click through every line before the level becomes interactive.
 - **Behavior**:
   - Each array entry is one click-through page of dialogue, spoken by the single hardcoded character ("Mack", portrait at `public/assets/construction-worker.jpg`, set independently by each HTML page's own `<img>` tag since root vs sandbox pages need different relative paths - only the speaker name is hardcoded in `DialogueUI.js`).
   - Shown once per participant per level, persisted via a participant-scoped localStorage key (`dialogueSeen_${participantId}_${levelId}`, mirroring `BlocklyManager`'s workspace-storage key convention). Reloading, resetting, or re-running the level (`Run Code`) will **not** replay it - only navigating to the level fresh will, and only if it hasn't been seen yet.
   - In sandbox mode, always shows fresh (never persisted) so researchers can preview any level's dialogue on demand.
+  - **Chatbot-only lines**: a plain string entry is always shown to every participant. Use an object entry `{ text: "...", requiresChatbot: true }` instead for a line that only makes sense when the participant actually has Otto (e.g. tutorial_B's "meet your AI assistant" beat) - `LevelManager.loadLevelById()` filters these out before display for anyone where `chatbotEnabled === false` or their experimental group lacks the `chatbot` feature (control group). Filtering happens at display time, not level-load time, since group assignment isn't known when level config modules are first evaluated.
 - **Writing dialogue for graded levels**: the four experimental levels (`level_001`-`level_004`) are shown to each participant in a **counterbalanced order** (see `GroupConfig.js`'s `LATIN_SQUARE`), not always 1→2→3→4. Don't write dialogue that references relative sequence ("last time," "your final job") for these levels - each one's dialogue must stand alone. Tutorials, by contrast, always run in the same fixed order per group, so sequential callbacks are safe there.
 - **Example**:
   ```javascript
   dialogue: [
       "Here's a fresh work order — pickup on one side, dropoff on the other.",
-      "No starter code to lean on this time."
+      "No starter code to lean on this time.",
+      { text: "Oh, and Otto's here if you want a second opinion.", requiresChatbot: true }
   ]
   ```
+
+### `chatbotHint` (Optional)
+- **Type**: String (HTML allowed, same as `instructions`)
+- **Default**: none
+- **Purpose**: Same idea as `dialogue`'s `requiresChatbot` entries, but for the static `instructions` banner instead of the dialogue box. Appended to `instructions` (with a leading space) only for participants who currently have the chatbot, per the same `chatbotEnabled`/group-feature check - use it for a sentence like "try asking Otto if you get stuck" that shouldn't appear for the control group. Leave the base `instructions` string itself chatbot-agnostic.
 
 ## Naming Conventions
 

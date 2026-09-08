@@ -113,6 +113,18 @@ export class LevelManager {
             // Instructions are now uniform for all groups
             // Role-specific instructions removed since pair programming mode is archived
 
+            // Append the optional chatbot-only hint only for participants who
+            // actually have Otto, same condition used for dialogue filtering
+            // above - avoids telling control-group participants about an
+            // assistant they don't have access to.
+            if (config.chatbotHint) {
+                const hasChatbot = config.chatbotEnabled !== false &&
+                    !!window.experimentManager?.hasFeature('chatbot');
+                if (hasChatbot) {
+                    instructions += ' ' + config.chatbotHint;
+                }
+            }
+
             textElement.innerHTML = instructions;
         }
 
@@ -272,7 +284,21 @@ export class LevelManager {
         // uniformly since it runs before the survey-type branch below.
         if (Array.isArray(config.dialogue) && window.dialogueUI) {
             if (!window.dialogueUI.hasSeen(levelId)) {
-                await window.dialogueUI.show(config.dialogue, levelId);
+                const hasChatbot = config.chatbotEnabled !== false &&
+                    !!window.experimentManager?.hasFeature('chatbot');
+                // Dialogue entries are normally plain strings; an entry can
+                // also be { text, requiresChatbot: true } to mark a line that
+                // only makes sense for participants who actually have Otto
+                // (e.g. tutorial_B's "meet your AI assistant" beat) - skip
+                // those for everyone else instead of showing a line that
+                // references a feature they don't have.
+                const lines = config.dialogue
+                    .filter(line => typeof line === 'string' || !line.requiresChatbot || hasChatbot)
+                    .map(line => typeof line === 'string' ? line : line.text);
+
+                if (lines.length > 0) {
+                    await window.dialogueUI.show(lines, levelId);
+                }
                 window.dialogueUI.markSeen(levelId);
             }
         }
